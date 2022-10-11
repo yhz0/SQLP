@@ -3,7 +3,9 @@ using Pkg; Pkg.activate(".")
 
 using Test, SQLP
 # Token tests
-token = SQLP._tokenize_cor("spInput/lands/lands.cor")
+
+token = SQLP._tokenize_cor(open("spInput/lands/lands.cor"))
+
 
 # _parse_row_tokenss
 direction, row_names = SQLP._parse_row_tokens(token["ROWS"])
@@ -27,3 +29,8 @@ M = SQLP._parse_column_to_matrix(token["COLUMNS"], row_names, col_names)
 # _parse_rhs
 rhs = SQLP._parse_rhs(token["RHS"], row_names)
 @test rhs == Float64[0., 12, 120, 0, 0, 0, 0, 0, 3, 2]
+
+# _parse_bounds
+lb, ub = SQLP._parse_bounds(token["BOUNDS"], col_names)
+@test all(lb .== 0.0)
+@test all(ub .== +Inf)

@@ -1,31 +1,29 @@
-using JuMP, MathOptInterface
 using SparseArrays
 
 """
 A problem template defined by SMPS format.
 """
-struct spCorType{T}
+struct spCorType
     problem_name::String
-    template_matrix::AbstractMatrix{T}
+    template_matrix::SparseMatrixCSC{Float64, Int}
+    rhs::SparseVector{Float64, Int}
     directions::Vector{String}
     row_names::Vector{String}
     col_names::Vector{String}
+    lower_bound::Vector{Float64}
+    upper_bound::Vector{Float64}
 end
 
 """
 Parse cor file into tokens for intermediate representation.
 """
-function _tokenize_cor(cor_path::String)
-    tokens = Dict(
-        "NAME" => [],
-        "ROWS" => [],
-        "COLUMNS" => [],
-        "RHS" => [],
-        "BOUNDS" => []
-    )
+function _tokenize_cor(io::IO)
+    supported_sections::Vector{String} = ["NAME", "ROWS", "COLUMNS",
+        "RHS", "BOUNDS", "ENDATA"]
+    tokens = Dict(section_name => [] for section_name in supported_sections)
 
     # Read cor and remove empty or comment rows
-    lines = readlines(cor_path)
+    lines = readlines(io)
     filter!(s -> (!isempty(s) && s[1] != '*'), lines)
 
     section = ""
@@ -37,6 +35,7 @@ function _tokenize_cor(cor_path::String)
         if line[1] != ' '
             # Split each row into tokens first
             section = token[1]
+            @assert(section in supported_sections)
 
             # special case for NAME section because it is on
             # the same line
@@ -52,21 +51,27 @@ function _tokenize_cor(cor_path::String)
     return tokens
 end
 
-# Parse row tokens into constraint
-# direction and list of row names
+"""
+Parse row tokens into constraint direction and list of row names.
+"""
 function _parse_row_tokens(tokens)
     direction::Vector{Char} = [t[1][1] for t in tokens]
     row_names::Vector{String} = [t[2] for t in tokens]
     return direction, row_names
 end
 
-# Extract variable names from column tokens
+"""
+Extract variable names from column tokens.
+"""
 function _parse_unique_columns(tokens)
     col_names::Vector{String} = [t[1] for t in tokens]
     return unique(col_names)
 end
 
-# Extract the coefficient matrix
+"""
+Extract the coefficient matrix. The first row is assumed to be
+the objective row.
+"""
 function _parse_column_to_matrix(tokens, row_names, col_names)
     # Build mapping from the names to the assigned indices
     col_mapping = Dict(col => i for (i, col) in enumerate(col_names))
@@ -89,7 +94,9 @@ function _parse_column_to_matrix(tokens, row_names, col_names)
     return M
 end
 
-# Extract the rhs from RHS tokens, assuming zero entry for unfound
+"""
+Extract the rhs from RHS tokens, assuming all missing entries are zeros.
+"""
 function _parse_rhs(tokens, row_names)
     row_mapping = Dict(row => i for (i, row) in enumerate(row_names))
     rhs = zeros(length(row_names))
@@ -100,4 +107,51 @@ function _parse_rhs(tokens, row_names)
         end
     end
     return rhs
+end
+
+
+"""
+Parse the bounds section of cor tokens. Return the lower_bound and upper_bound.
+If lower bound is missing, assuming a zero lower bound.
+If upper bound is missing, assuming infinity upper bound.
+"""
+function _parse_bounds(tokens, col_names)
+    supported_bound_types = ["LO", "UP", "FX", "FR", "MI", "PL"]
+    col_mapping = Dict(col => i for (i, col) in enumerate(col_names))
+    lower_bound::Vector{Float64} = fill(0.0, length(col_names))
+    upper_bound::Vector{Float64} = fill(Inf, length(col_names))
+    for token in tokens
+        bound_type = token[1]
+        @assert(bound_type in supported_bound_types,
+            "Unsupported bound type $bound_type for variable $(token[3])")
+        col_index = col_mapping[token[3]]
+
+        if bound_type == "LO"
+            lower_bound[col_index] = parse(Float64, token[4])
+        elseif bound_type == "UP"
+            upper_bound[col_index] = parse(Float64, token[4])
+        elseif bound_type == "FX"
+            lower_bound[col_index] = parse(Float64, token[4])
+            upper_bound[col_index] = parse(Float64, token[4])
+        elseif bound_type == "FR"
+            lower_bound[col_index] = -Inf
+            upper_bound[col_index] = +Inf
+        elseif bound_type == "MI"
+            lower_bound[col_index] = -Inf
+        elseif bound_type == "PL"
+            upper_bound[col_index] = +Inf
+        else
+            error("Unknown bound type $bound_type")
+        end
+    end
+
+    return lower_bound, upper_bound
+end
+
+"""
+Read cor file into core type.
+TODO: implement
+"""
+function read_cor(cor_path::String)::spCorType
+    
 end

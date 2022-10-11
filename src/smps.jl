@@ -5,14 +5,18 @@ A problem template defined by SMPS format.
 """
 struct spCorType
     problem_name::String
-    template_matrix::SparseMatrixCSC{Float64, Int}
-    rhs::SparseVector{Float64, Int}
-    directions::Vector{String}
+    directions::Vector{Char}
     row_names::Vector{String}
     col_names::Vector{String}
+    template_matrix::SparseMatrixCSC{Float64, Int}
+    rhs::SparseVector{Float64, Int}
     lower_bound::Vector{Float64}
     upper_bound::Vector{Float64}
 end
+
+import Base.show
+"Display for cor format."
+Base.show(io::IO, cor::spCorType) = print(io, "spCorType $(cor.problem_name)")
 
 """
 Parse cor file into tokens for intermediate representation.
@@ -153,5 +157,19 @@ Read cor file into core type.
 TODO: implement
 """
 function read_cor(cor_path::String)::spCorType
-    
+    local token
+    open(cor_path, "r") do io
+        token = _tokenize_cor(io)
+    end
+    problem_name::String = token["NAME"][1]
+    directions, row_names = SQLP._parse_row_tokens(token["ROWS"])
+    col_names = _parse_unique_columns(token["COLUMNS"])
+    template_matrix = _parse_column_to_matrix(token["COLUMNS"],
+        row_names, col_names)
+    rhs = _parse_rhs(token["RHS"], row_names)
+    lb, ub = _parse_bounds(token["BOUNDS"], col_names)
+
+    cor = spCorType(problem_name, directions, row_names, col_names,
+        template_matrix, rhs, lb, ub)
+    return cor
 end

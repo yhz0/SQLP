@@ -6,7 +6,6 @@ using Test, SQLP
 
 token = SQLP._tokenize_cor(open("spInput/lands/lands.cor"))
 
-
 # _parse_row_tokenss
 direction, row_names = SQLP._parse_row_tokens(token["ROWS"])
 @test direction == collect("NGLLLLLGGG")
@@ -34,3 +33,5 @@ rhs = SQLP._parse_rhs(token["RHS"], row_names)
 lb, ub = SQLP._parse_bounds(token["BOUNDS"], col_names)
 @test all(lb .== 0.0)
 @test all(ub .== +Inf)
+
+cor = SQLP.read_cor("spInput/lands/lands.cor")

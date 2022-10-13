@@ -34,4 +34,8 @@ lb, ub = SQLP._parse_bounds(token["BOUNDS"], col_names)
 @test all(lb .== 0.0)
 @test all(ub .== +Inf)
 
-cor = SQLP.read_cor("spInput/lands/lands.cor")
+## TIM section
+tim = SQLP.read_tim("spInput/lands/lands.tim")
+@test tim.problem_name == "LandS"
+@test tim.periods[1] == SQLP.spSmpsImplicitPeriod("TIME1", "X1", "OBJ")
+@test tim.periods[2] == SQLP.spSmpsImplicitPeriod("TIME2", "Y11", "S2C1")

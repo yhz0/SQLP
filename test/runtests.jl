@@ -39,3 +39,10 @@ tim = SQLP.read_tim("spInput/lands/lands.tim")
 @test tim.problem_name == "LandS"
 @test tim.periods[1] == SQLP.spSmpsImplicitPeriod("TIME1", SQLP.spSmpsPosition("X1", "OBJ"))
 @test tim.periods[2] == SQLP.spSmpsImplicitPeriod("TIME2", SQLP.spSmpsPosition("Y11", "S2C1"))
+
+# STO section
+sto = SQLP.read_sto("spInput/lands/lands.sto")
+@test sto.problem_name == "LandS"
+pos = SQLP.spSmpsPosition("RHS", "S2C5")
+@test sto.indep[pos].value == [3.0, 5.0, 7.0]
+@test sto.indep[pos].probability == [0.3, 0.4, 0.3]

@@ -182,12 +182,20 @@ function read_cor(cor_path::String)::spCorType
 end
 
 """
+Structure for pointing out a position in the LP template,
+containing a col_name and a row_name.
+"""
+struct spSmpsPosition
+    col_name::String
+    row_name::String
+end
+
+"""
 Structure for storing one single period.
 """
 struct spSmpsImplicitPeriod
     period_name::String
-    col_name::String
-    row_name::String
+    position::spSmpsPosition
 end
 
 """
@@ -221,7 +229,7 @@ function read_tim(tim_path::String)::spTimType
             col_name = token[1]
             row_name = token[2]
             period_name = token[3]
-            period = spSmpsImplicitPeriod(period_name, col_name, row_name)
+            period = spSmpsImplicitPeriod(period_name, spSmpsPosition(col_name, row_name))
             push!(periods, period)
         else
             section = token[1]
@@ -234,4 +242,3 @@ function read_tim(tim_path::String)::spTimType
 
     return spTimType(problem_name, periods)
 end
-

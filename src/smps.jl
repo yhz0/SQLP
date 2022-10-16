@@ -12,6 +12,8 @@ struct spCorType
     rhs::SparseVector{Float64, Int}
     lower_bound::Vector{Float64}
     upper_bound::Vector{Float64}
+    col_mapping::Dict{String, Int}
+    row_mapping::Dict{String, Int}
 end
 
 import Base.show
@@ -168,6 +170,14 @@ function read_cor(cor_path::String)::spCorType
     rhs = _parse_rhs(token["RHS"], row_names)
     lb, ub = _parse_bounds(token["BOUNDS"], col_names)
 
+    # Generate mapping from row to indices
+    col_mapping = get_name_mapping(col_names)
+    row_mapping = get_name_mapping(row_names)
+
+    # Check that the first tow is the objective row
+    @assert(directions[1] == 'N',
+        "First row or cor file is not objective. $directions")
+
     cor = spCorType(
         problem_name,
         directions,
@@ -176,7 +186,9 @@ function read_cor(cor_path::String)::spCorType
         template_matrix,
         rhs,
         lb,
-        ub
+        ub,
+        col_mapping,
+        row_mapping
     )
     return cor
 end

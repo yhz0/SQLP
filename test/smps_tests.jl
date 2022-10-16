@@ -46,3 +46,16 @@ sto = SQLP.read_sto("spInput/lands/lands.sto")
 pos = SQLP.spSmpsPosition("RHS", "S2C5")
 @test sto.indep[pos].value == [3.0, 5.0, 7.0]
 @test sto.indep[pos].probability == [0.3, 0.4, 0.3]
+
+# SMPS problem tests
+cor = SQLP.read_cor("spInput/lands/lands.cor")
+
+using JuMP
+# Template reading
+template1 = SQLP.get_smps_stage_template(cor, tim, 1)
+@test length(all_variables(template1)) == 4
+@test length(all_constraints(template1; include_variable_in_set_constraints=false)) == 2
+template2 = SQLP.get_smps_stage_template(cor, tim, 2)
+@test length(all_variables(template2)) ==  16
+@test length(all_constraints(template2; include_variable_in_set_constraints=false)) == 7
+@test objective_function(template2) != 0

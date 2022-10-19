@@ -9,13 +9,19 @@ struct spSmpsProblem <: spProblem
 end
 
 """
-Get a template model from SMPS cor and tim partitions, returns a JuMP Model.
-The references to variables (in order) will be stored in
-model.ext[:last_stage_vars]
-model.ext[:current_stage_vars]
-model.ext[:stage_constraints]
+An SP Stage Problem or Subproblem.
 """
-function get_smps_stage_template(cor::spCorType, tim::spTimType, stage::Int)::Model
+struct spStageProblem
+    model::Model
+    last_stage_vars::Union{Vector{VariableRef}, Nothing}
+    current_stage_vars::Vector{VariableRef}
+    stage_constraints::Vector{ConstraintRef}
+end
+
+"""
+Get a template model from SMPS cor and tim partitions, returns spStageProblem template.
+"""
+function get_smps_stage_template(cor::spCorType, tim::spTimType, stage::Int)::spStageProblem
     model = Model()
 
     @assert(1 <= stage <= length(tim.periods))
@@ -58,10 +64,6 @@ function get_smps_stage_template(cor::spCorType, tim::spTimType, stage::Int)::Mo
             push!(last_stage_vars, var)
         end
     end
-
-    # Store the variable references in the ext
-    model.ext[:last_stage_vars] = last_stage_vars
-    model.ext[:current_stage_vars] = current_stage_vars
 
     # We do things on the first objective row, and only add the current stage
     obj = cor.template_matrix[1, current_stage_start_col_index:end_col_index]' * current_stage_vars
@@ -106,7 +108,5 @@ function get_smps_stage_template(cor::spCorType, tim::spTimType, stage::Int)::Mo
         push!(cons, con)
     end
 
-    model.ext[:stage_constraints] = cons
-    
-    return model
+    return spStageProblem(model, last_stage_vars, current_stage_vars, cons)
 end

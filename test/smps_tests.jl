@@ -3,7 +3,6 @@ using Pkg; Pkg.activate(".")
 
 using Test, SQLP
 # Token tests
-
 token = SQLP._tokenize_cor(open("spInput/lands/lands.cor"))
 
 # _parse_row_tokenss
@@ -40,6 +39,19 @@ tim = SQLP.read_tim("spInput/lands/lands.tim")
 @test tim.periods[1] == SQLP.spSmpsImplicitPeriod("TIME1", SQLP.spSmpsPosition("X1", "OBJ"))
 @test tim.periods[2] == SQLP.spSmpsImplicitPeriod("TIME2", SQLP.spSmpsPosition("Y11", "S2C1"))
 
+# COR integrated tests
+cor = SQLP.read_cor("spInput/lands/lands.cor")
+
+using JuMP
+# Template reading
+template1 = SQLP.get_smps_stage_template(cor, tim, 1).model
+@test length(all_variables(template1)) == 4
+@test length(all_constraints(template1; include_variable_in_set_constraints=false)) == 2
+template2 = SQLP.get_smps_stage_template(cor, tim, 2).model
+@test length(all_variables(template2)) ==  16
+@test length(all_constraints(template2; include_variable_in_set_constraints=false)) == 7
+@test objective_function(template2) != 0
+
 # STO section
 sto = SQLP.read_sto("spInput/lands/lands.sto")
 @test sto.problem_name == "LandS"
@@ -47,15 +59,6 @@ pos = SQLP.spSmpsPosition("RHS", "S2C5")
 @test sto.indep[pos].value == [3.0, 5.0, 7.0]
 @test sto.indep[pos].probability == [0.3, 0.4, 0.3]
 
-# SMPS problem tests
-cor = SQLP.read_cor("spInput/lands/lands.cor")
-
-using JuMP
-# Template reading
-template1 = SQLP.get_smps_stage_template(cor, tim, 1)
-@test length(all_variables(template1)) == 4
-@test length(all_constraints(template1; include_variable_in_set_constraints=false)) == 2
-template2 = SQLP.get_smps_stage_template(cor, tim, 2)
-@test length(all_variables(template2)) ==  16
-@test length(all_constraints(template2; include_variable_in_set_constraints=false)) == 7
-@test objective_function(template2) != 0
+using Random
+rng = MersenneTwister(1234)
+@test rand(rng, sto.indep[pos]) == 5.0

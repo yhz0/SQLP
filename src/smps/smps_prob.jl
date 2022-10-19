@@ -9,11 +9,6 @@ struct spSmpsProblem <: spProblem
 end
 
 """
-A realized scenario, that contains the information to change a stage problem coefficients.
-"""
-abstract type spNoise end
-
-"""
 Get a template model from SMPS cor and tim partitions, returns a JuMP Model.
 The references to variables (in order) will be stored in
 model.ext[:last_stage_vars]

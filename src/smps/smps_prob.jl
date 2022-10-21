@@ -9,16 +9,6 @@ struct spSmpsProblem <: spProblem
 end
 
 """
-An SP Stage Problem or Subproblem.
-"""
-struct spStageProblem
-    model::Model
-    last_stage_vars::Union{Vector{VariableRef}, Nothing}
-    current_stage_vars::Vector{VariableRef}
-    stage_constraints::Vector{ConstraintRef}
-end
-
-"""
 Get a template model from SMPS cor and tim partitions, returns spStageProblem template.
 """
 function get_smps_stage_template(cor::spCorType, tim::spTimType, stage::Int)::spStageProblem

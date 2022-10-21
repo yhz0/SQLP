@@ -1,3 +1,5 @@
+using JuMP
+
 """
 An SP Stage Problem or Subproblem.
 """

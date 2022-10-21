@@ -3,7 +3,7 @@ using JuMP
 """
 An SP problem defined by smps format.
 """
-struct spSmpsProblem <: spProblem
+struct spSmpsProblem
     cor::spCorType
     tim::spTimType
 end

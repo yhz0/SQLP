@@ -44,13 +44,13 @@ cor = SQLP.read_cor("spInput/lands/lands.cor")
 
 using JuMP
 # Template reading
-template1 = SQLP.get_smps_stage_template(cor, tim, 1).model
-@test length(all_variables(template1)) == 4
-@test length(all_constraints(template1; include_variable_in_set_constraints=false)) == 2
-template2 = SQLP.get_smps_stage_template(cor, tim, 2).model
-@test length(all_variables(template2)) ==  16
-@test length(all_constraints(template2; include_variable_in_set_constraints=false)) == 7
-@test objective_function(template2) != 0
+sp1 = SQLP.get_smps_stage_template(cor, tim, 1)
+@test length(all_variables(sp1.model)) == 4
+@test length(all_constraints(sp1.model; include_variable_in_set_constraints=false)) == 2
+sp2 = SQLP.get_smps_stage_template(cor, tim, 2)
+@test length(all_variables(sp2.model)) ==  16
+@test length(all_constraints(sp2.model; include_variable_in_set_constraints=false)) == 7
+@test objective_function(sp2.model) != 0
 
 # STO section
 sto = SQLP.read_sto("spInput/lands/lands.sto")
@@ -59,6 +59,18 @@ pos = SQLP.spSmpsPosition("RHS", "S2C5")
 @test sto.indep[pos].value == [3.0, 5.0, 7.0]
 @test sto.indep[pos].probability == [0.3, 0.4, 0.3]
 
+# Scenario generation
 using Random
 rng = MersenneTwister(1234)
-@test rand(rng, sto.indep[pos]) == 5.0
+@test rand(rng, sto.indep[pos]) in [3.0, 5.0, 7.0]
+
+scenario = SQLP.sample_scenario(sto)
+@test scenario[1].second in [3.0, 5.0, 7.0]
+
+# Test change subproblem
+scenario = [SQLP.spSmpsPosition("RHS", "S2C5") => 1234.0]
+SQLP.instantiate!(sp2, scenario)
+@test normalized_rhs(constraint_by_name(sp2.model, "S2C5")) == 1234.0
+
+# Check that if position is invalid throws an error
+@test_throws AssertionError SQLP.instantiate!(sp1, scenario)

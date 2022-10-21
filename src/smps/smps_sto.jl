@@ -125,3 +125,9 @@ function Base.rand(rng::Random.AbstractRNG, p::spSmpsUniformDistribution)::Float
     return rand(rng, dist)
 end
 
+"""
+Generate a scenario for sto type.
+"""
+function sample_scenario(sto::spStoType)
+    [pos => rand(indep) for (pos, indep) in sto.indep]
+end

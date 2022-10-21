@@ -68,9 +68,10 @@ scenario = SQLP.sample_scenario(sto)
 @test scenario[1].second in [3.0, 5.0, 7.0]
 
 # Test change subproblem
-scenario = [SQLP.spSmpsPosition("RHS", "S2C5") => 1234.0]
+scenario = [SQLP.spSmpsPosition("RHS", "S2C5") => 4.0]
 SQLP.instantiate!(sp2, scenario)
-@test normalized_rhs(constraint_by_name(sp2.model, "S2C5")) == 1234.0
+@test normalized_rhs(constraint_by_name(sp2.model, "S2C5")) == 4.0
 
-# Check that if position is invalid throws an error
+# If position specified by scenario is invalid then
+# it should throw an error
 @test_throws AssertionError SQLP.instantiate!(sp1, scenario)

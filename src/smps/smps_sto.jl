@@ -49,6 +49,8 @@ function read_sto(sto_path::String)::spStoType
     local problem_name::String
     local indep = Dict{spSmpsPosition, spSmpsIndepDistribution}()
     supported_sections::Vector{String} = ["STOCH", "INDEP", "ENDATA"]
+    
+    filter!(s -> (!isempty(s) && s[1] != '*'), lines)
 
     for line in lines
         token = split(line)

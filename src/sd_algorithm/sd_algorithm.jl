@@ -33,7 +33,7 @@ function initialize_master!(cell::sdCell, root_prob::spStageProblem)
 end
 
 """
-Add epigraph variables to the master
+Add epigraph variables to the master, with specified weights in the objective.
 """
 function add_epigraph_variables!(cell::sdCell, num::Int, weights::Vector{Float64})
     if sum(weights) != 1.0
@@ -50,5 +50,17 @@ function add_epigraph_variables!(cell::sdCell, num::Int, weights::Vector{Float64
     f = objective_function(cell.master)
     set_objective_function(cell.master, f + dot(weights, epivar))
 
+    return
+end
+
+"""
+Specify bounds for each epigraph variable.
+"""
+function set_epigraph_bound(cell::sdCell, bounds::Vector{Float64})
+    @assert(length(bounds) == length(cell.epivar_ref))
+
+    # TODO: implement
+    error("Not implemented")
+    
     return
 end

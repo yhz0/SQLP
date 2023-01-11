@@ -110,8 +110,10 @@ function read_sto(sto_path::String)::spStoType
     return spStoType(problem_name, indep)
 end
 
-# Generate random variables
 using Random, Distributions
+
+# Sample routines
+
 function Base.rand(rng::Random.AbstractRNG, p::spSmpsDiscreteDistribution)::Float64
     dist = DiscreteNonParametric(p.value, p.probability)
     return rand(rng, dist)

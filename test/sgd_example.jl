@@ -18,4 +18,4 @@ fix.(sp2.last_stage_vars, X; force=true)
 
 using CPLEX
 optimize!(sp2.model)
-dual(FixRef.(sp2.last_stage_vars))
+subgradient = dual(FixRef.(sp2.last_stage_vars))

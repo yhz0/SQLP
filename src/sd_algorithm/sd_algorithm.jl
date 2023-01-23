@@ -43,7 +43,7 @@ function add_epigraph_variables!(cell::sdCell, num::Int, weights::Vector{Float64
     @assert(length(weights) == num)
 
     # Register epigraph variables
-    epivar = @variable(master, _eta[1:num])
+    epivar = @variable(cell.master, _eta[1:num])
     cell.epivar_ref = epivar
 
     # Update objective function
@@ -56,11 +56,10 @@ end
 """
 Specify bounds for each epigraph variable.
 """
-function set_epigraph_bound(cell::sdCell, bounds::Vector{Float64})
+function set_epigraph_bound!(cell::sdCell, bounds::Vector{Float64})
     @assert(length(bounds) == length(cell.epivar_ref))
-
-    # TODO: implement
-    error("Not implemented")
-    
+    set_lower_bound.(cell.epivar_ref, bounds)
     return
 end
+
+# export sdCell, initialize_master!, set_epigraph_bound!

@@ -20,3 +20,5 @@ SQLP.initialize_master!(cell, sp1)
 
 # Epigraph Variables
 # TODO: write test
+SQLP.add_epigraph_variables!(cell, 2, [0.5, 0.5])
+SQLP.set_epigraph_bound!(cell, [0.0, 0.0])

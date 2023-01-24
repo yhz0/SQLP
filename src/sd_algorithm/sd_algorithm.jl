@@ -1,24 +1,39 @@
 using LinearAlgebra
+
+include("subprob.jl")
+
 # Implementation of Two-stage Stochastic Decomposition algorithm
 
-"""
-Internal State information during SD run.
-master: master problem
-
-
-"""
-
 mutable struct sdCell
+    # Master Problem
     master::Model
-    
-    # Reference in the order of assignment
+
+    # Reference to first stage variables
     x_ref::Vector{VariableRef}
+
+    # Reference to first stage constraints
     root_stage_con::Vector{ConstraintRef}
 
+    # Reference to epigraph variables
     epivar_ref::Vector{VariableRef}
+
+    # Regularization strength
+    reg::Float64
 
     sdCell() = new()
 end
+
+mutable struct sdEpigraph
+    # Epigraph weights
+    epigraph_weight::Float64
+
+    # Scenario weights
+    scenario_weight::Vector{Float64}
+
+    # Scenarios
+    scenarios::Vector{Any}
+end
+
 
 """
 Copy master problem and master constraints into the cell.
@@ -32,34 +47,3 @@ function initialize_master!(cell::sdCell, root_prob::spStageProblem)
     return
 end
 
-"""
-Add epigraph variables to the master, with specified weights in the objective.
-"""
-function add_epigraph_variables!(cell::sdCell, num::Int, weights::Vector{Float64})
-    if sum(weights) != 1.0
-        @warn("Epigraph weights does not add up to 1.0.")
-    end
-
-    @assert(length(weights) == num)
-
-    # Register epigraph variables
-    epivar = @variable(cell.master, _eta[1:num])
-    cell.epivar_ref = epivar
-
-    # Update objective function
-    f = objective_function(cell.master)
-    set_objective_function(cell.master, f + dot(weights, epivar))
-
-    return
-end
-
-"""
-Specify bounds for each epigraph variable.
-"""
-function set_epigraph_bound!(cell::sdCell, bounds::Vector{Float64})
-    @assert(length(bounds) == length(cell.epivar_ref))
-    set_lower_bound.(cell.epivar_ref, bounds)
-    return
-end
-
-# export sdCell, initialize_master!, set_epigraph_bound!

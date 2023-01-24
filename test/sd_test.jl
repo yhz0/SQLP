@@ -18,7 +18,5 @@ SQLP.initialize_master!(cell, sp1)
 @test length(cell.root_stage_con) == 2
 @test cell.x_ref[1].model === cell.master
 
-# Epigraph Variables
-# TODO: write test
-SQLP.add_epigraph_variables!(cell, 2, [0.5, 0.5])
-SQLP.set_epigraph_bound!(cell, [0.0, 0.0])
+# Test extract coefficients
+coef = SQLP.extract_coefficients(sp2)

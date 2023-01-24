@@ -9,11 +9,11 @@ sp2 = SQLP.get_smps_stage_template(cor, tim, 2)
 
 # Create cell
 cell = SQLP.sdCell()
+@test cell !== nothing
 
 # Initialze master
 SQLP.initialize_master!(cell, sp1)
 
-@test cell !== nothing
 @test length(cell.x_ref) == 4
 @test length(cell.root_stage_con) == 2
 @test cell.x_ref[1].model === cell.master

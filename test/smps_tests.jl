@@ -1,6 +1,4 @@
 # Unit tests for SQLP
-using Pkg; Pkg.activate(".")
-
 using Test, SQLP
 # Token tests
 token = SQLP._tokenize_cor(open("spInput/lands/lands.cor"))

@@ -23,6 +23,21 @@ mutable struct sdCell
     sdCell() = new()
 end
 
+"""
+A representation of a cut under an epigrpah in SD.
+Stands for η≥α+βx.
+"""
+struct sdCut
+    alpha::Float64
+    beta::Vector{Float64}
+    # Records when this cut is generated. Used to scale the cut as appropriate.
+    weight_mark::Float64
+    incumbent::Bool
+end
+
+"""
+A convex piecewise function approximation.
+"""
 mutable struct sdEpigraph
     # Epigraph weights
     epigraph_weight::Float64
@@ -30,8 +45,13 @@ mutable struct sdEpigraph
     # Scenario weights
     scenario_weight::Vector{Float64}
 
+    # Total scenario weights
+    total_scenario_weight::Float64
+
     # Scenarios
     scenarios::Vector{Any}
+
+    sdEpigraph() = new()
 end
 
 
@@ -47,3 +67,11 @@ function initialize_master!(cell::sdCell, root_prob::spStageProblem)
     return
 end
 
+"""
+Add a scenario to epigraph variable epi.
+"""
+function add_scenario(epi::sdEpigraph, scenario, weight::Float64)
+    push!(epi.scenarios, scenario)
+    push!(epi.scenario_weight, weight)
+    epi.total_scenario_weight += weight
+end

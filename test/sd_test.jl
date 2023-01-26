@@ -6,6 +6,7 @@ sto = SQLP.read_sto(joinpath("spInput", "lands", "lands.sto"))
 # the stage templates
 sp1 = SQLP.get_smps_stage_template(cor, tim, 1)
 sp2 = SQLP.get_smps_stage_template(cor, tim, 2)
+set_optimizer(sp2.model, CPLEX.Optimizer)
 
 # Create cell
 cell = SQLP.sdCell()
@@ -28,11 +29,43 @@ coef = SQLP.extract_coefficients(sp2)
 # Make sure only the existing key can be found
 @test_throws KeyError coef.col_lookup["Y11"]
 
-# TODO: test for eval_dual
-my_dual = randn(7)
-my_x = randn(4)
+# Test modify coefficients
 my_scenario = [SQLP.spSmpsPosition("RHS", "S2C5") => 5.0]
 my_scenario_2 = [SQLP.spSmpsPosition("RHS", "S2C5") => 3.0]
-@show SQLP.eval_dual(coef, my_x, my_dual, my_scenario)
-@show SQLP.eval_dual(coef, my_x, my_dual, my_scenario_2)
 
+SQLP.modify_coefficients!(coef, my_scenario)
+@test coef.rhs[coef.row_lookup["S2C5"]] == 5.0
+SQLP.modify_coefficients!(coef, my_scenario_2)
+@test coef.rhs[coef.row_lookup["S2C5"]] == 3.0
+
+# Test for eval_dual
+# Check the answers against solving the dual exactly.
+my_x = [3.0, 3.0, 3.0, 3.0]
+
+fix.(sp2.last_stage_vars, my_x, force=true)
+SQLP.instantiate!(sp2, my_scenario)
+optimize!(sp2.model)
+
+my_dual = dual.(sp2.stage_constraints)
+sc_val1_true = objective_value(sp2.model)
+
+sc_val1 = SQLP.eval_dual(coef, my_x, my_dual, my_scenario)
+
+@test sc_val1_true == sc_val1
+
+SQLP.instantiate!(sp2, my_scenario_2)
+optimize!(sp2.model)
+sc_val2_true = objective_value(sp2.model)
+
+my_dual_2 = dual.(sp2.stage_constraints)
+sc_val2 = SQLP.eval_dual(coef, my_x, my_dual_2, my_scenario_2)
+
+@test sc_val2_true == sc_val2
+
+# Test for delta coefficients
+SQLP.instantiate!(sp2, my_scenario_2) # RHS, S2C5 => 3.0
+coef = SQLP.extract_coefficients(sp2)
+delta = SQLP.delta_coefficients(coef, my_scenario) # RHS, S2C5 => 5.0, so delta for RHS, S2C5 == 2.0
+ind = coef.row_lookup["S2C5"]
+@test delta.delta_rhs[ind] == 2.0
+@test sum(delta.delta_transfer) == 0.0

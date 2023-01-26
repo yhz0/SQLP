@@ -69,7 +69,8 @@ function extract_coefficients(prob::spStageProblem)::sdSubprobCoefficients
 end
 
 """
-Modify the coefficients according to the scenario.
+Modify the coefficients according to the scenario. This will
+invalidate all sdDeltaCoefficients.
 """
 function modify_coefficients!(coef::sdSubprobCoefficients, smps_scenario)
     for i in eachindex(smps_scenario)
@@ -84,8 +85,39 @@ function modify_coefficients!(coef::sdSubprobCoefficients, smps_scenario)
             coef.transfer[row_index, col_index] = val
         end
     end
+    return
+end
 
-    return coef
+"""
+For storing the difference between the template matrix and the
+scenario coefficient matrix.
+"""
+struct sdDeltaCoefficients
+    delta_rhs
+    delta_transfer
+end
+
+"""
+Given a scenario, calculate the delta matrices relative to coef.
+Used to decompose T_i = T + dT. r_i = r + dr. Returns dT, dr,
+"""
+function delta_coefficients(coef::sdSubprobCoefficients, smps_scenario)::sdDeltaCoefficients
+    delta_rhs = spzeros(length(coef.rhs))
+    delta_transfer = spzeros(size(coef.transfer))
+
+    for i in eachindex(smps_scenario)
+        pos::spSmpsPosition = smps_scenario[i].first
+        val::Float64 = smps_scenario[i].second
+        
+        row_index = coef.row_lookup[pos.row_name]
+        if pos.col_name == "RHS" || pos.col_name == "rhs"
+            delta_rhs[row_index] = val - coef.rhs[row_index]
+        else
+            col_index = coef.col_lookup[pos.col_name]
+            delta_transfer[row_index, col_index] = val - coef.transfer[row_index, col_index]
+        end
+    end
+    return sdDeltaCoefficients(delta_rhs, delta_transfer)
 end
 
 """

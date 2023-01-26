@@ -7,6 +7,7 @@ sto = SQLP.read_sto(joinpath("spInput", "lands", "lands.sto"))
 sp1 = SQLP.get_smps_stage_template(cor, tim, 1)
 sp2 = SQLP.get_smps_stage_template(cor, tim, 2)
 set_optimizer(sp2.model, CPLEX.Optimizer)
+set_silent(sp2.model)
 
 # Create cell
 cell = SQLP.sdCell()

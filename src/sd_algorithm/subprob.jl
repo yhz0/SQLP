@@ -125,7 +125,10 @@ Evaluate the dual solution dual at x, with the scenario set to omega.
 This assumes that all bounds-related dual variables are trivial.
 """
 function eval_dual(coef::sdSubprobCoefficients, x, dual, smps_scenario)::Float64
-    # set the coefficient to omega first
-    modify_coefficients!(coef, smps_scenario)
-    return dot(dual, coef.rhs - coef.transfer * x)
+    delta = delta_coefficients(coef, smps_scenario)
+    return dot(dual, (coef.rhs + delta.delta_rhs) - (coef.transfer + delta.delta_transfer) * x)
+end
+
+function argmax_dual(coef::sdSubprobCoefficients, x, dual, smps_scenario)
+
 end

@@ -83,7 +83,7 @@ x2 = [2.0, 4.0, 2.0, 6.0]
 @test SQLP.check_first_stage_feasible(sp1, x2; optimizer=optimizer)
 
 coef = SQLP.extract_coefficients(sp2)
-scenario_set = [my_scenario, my_scenario, my_scenario_2, my_scenario_3]
+scenario_set = SQLP.spSmpsScenario[my_scenario, my_scenario, my_scenario_2, my_scenario_3]
 delta_set = SQLP.delta_coefficients.(Ref(coef), scenario_set)
 
-SQLP.argmax_procedure(coef, delta_set, )
+# SQLP.argmax_procedure(coef, delta_set, )

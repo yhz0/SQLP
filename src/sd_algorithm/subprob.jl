@@ -72,7 +72,7 @@ end
 Modify the coefficients according to the scenario. This will
 invalidate all sdDeltaCoefficients.
 """
-function modify_coefficients!(coef::sdSubprobCoefficients, smps_scenario)
+function modify_coefficients!(coef::sdSubprobCoefficients, smps_scenario::spSmpsScenario)
     for i in eachindex(smps_scenario)
         pos::spSmpsPosition = smps_scenario[i].first
         val::Float64 = smps_scenario[i].second
@@ -101,7 +101,7 @@ end
 Given a scenario, calculate the delta matrices relative to coef.
 Used to decompose T_i = T + dT. r_i = r + dr. Returns dT, dr,
 """
-function delta_coefficients(coef::sdSubprobCoefficients, smps_scenario)::sdDeltaCoefficients
+function delta_coefficients(coef::sdSubprobCoefficients, smps_scenario::spSmpsScenario)::sdDeltaCoefficients
     delta_rhs = spzeros(length(coef.rhs))
     delta_transfer = spzeros(size(coef.transfer))
 
@@ -120,6 +120,7 @@ function delta_coefficients(coef::sdSubprobCoefficients, smps_scenario)::sdDelta
     return sdDeltaCoefficients(delta_rhs, delta_transfer)
 end
 
+
 """
 Evaluate the dual solution dual at x, with the scenario set to omega.
 This assumes that all bounds-related dual variables are trivial.
@@ -134,7 +135,8 @@ Returns a tuple: (arg, val, alpha, beta)
 arg: the dual vertice that gives the highest cut.
 val: the value of that cut at x
 """
-function argmax_procedure(coef::sdSubprobCoefficients, delta_set::Vector{sdDeltaCoefficients}, x::Vector{Float64}, dual_set)
+function argmax_procedure(coef::sdSubprobCoefficients, delta_set::Vector{sdDeltaCoefficients},
+    x::Vector{Float64}, dual_set)
     max_arg = Vector{Float64}[]
     max_val = Float64[]
 

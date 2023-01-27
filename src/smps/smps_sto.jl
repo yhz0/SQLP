@@ -128,15 +128,20 @@ function Base.rand(rng::Random.AbstractRNG, p::spSmpsUniformDistribution)::Float
 end
 
 """
+Structure to represent a scenario.
+"""
+spSmpsScenario = Vector{Pair{spSmpsPosition, Float64}}
+
+"""
 Generate a scenario for sto type. Returns pairs containing position to value.
 """
-function Base.rand(sto::spStoType)::Vector{Pair{spSmpsPosition, Float64}}
+function Base.rand(sto::spStoType)::spSmpsScenario
     [pos => rand(indep) for (pos, indep) in sto.indep]
 end
 
 """
 Generate a sto-based scenario with given rng. Returns pairs containing position to values.
 """
-function Base.rand(rng::AbstractRNG, sto::spStoType)::Vector{Pair{spSmpsPosition, Float64}}
+function Base.rand(rng::AbstractRNG, sto::spStoType)::spSmpsScenario
     [pos => rand(rng, indep) for (pos, indep) in sto.indep]
 end

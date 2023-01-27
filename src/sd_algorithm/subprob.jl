@@ -124,11 +124,18 @@ end
 Evaluate the dual solution dual at x, with the scenario set to omega.
 This assumes that all bounds-related dual variables are trivial.
 """
-function eval_dual(coef::sdSubprobCoefficients, x, dual, smps_scenario)::Float64
-    delta = delta_coefficients(coef, smps_scenario)
+function eval_dual(coef::sdSubprobCoefficients, delta::sdDeltaCoefficients,x::Vector{Float64}, dual::Vector{Float64})::Float64
     return dot(dual, (coef.rhs + delta.delta_rhs) - (coef.transfer + delta.delta_transfer) * x)
 end
 
-function argmax_dual(coef::sdSubprobCoefficients, x, dual, smps_scenario)
+"""
+Find the dual extreme point in the dual_set that yields the highest cut at given x.
+Returns a tuple: (arg, val, alpha, beta)
+arg: the dual vertice that gives the highest cut.
+val: the value of that cut at x
+alpha, beta: cut coefficients from pi*r and -pi*T
+"""
+function argmax_procedure(coef::sdSubprobCoefficients, delta::sdDeltaCoefficients, x::Vector{Float64}, dual_set)
 
+    error("Unimplemented")
 end

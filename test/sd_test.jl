@@ -39,30 +39,6 @@ SQLP.modify_coefficients!(coef, my_scenario)
 SQLP.modify_coefficients!(coef, my_scenario_2)
 @test coef.rhs[coef.row_lookup["S2C5"]] == 3.0
 
-# Test for eval_dual
-# Check the answers against solving the dual exactly.
-my_x = [3.0, 3.0, 3.0, 3.0]
-
-fix.(sp2.last_stage_vars, my_x, force=true)
-SQLP.instantiate!(sp2, my_scenario)
-optimize!(sp2.model)
-
-my_dual = dual.(sp2.stage_constraints)
-sc_val1_true = objective_value(sp2.model)
-
-sc_val1 = SQLP.eval_dual(coef, my_x, my_dual, my_scenario)
-
-@test sc_val1_true == sc_val1
-
-SQLP.instantiate!(sp2, my_scenario_2)
-optimize!(sp2.model)
-sc_val2_true = objective_value(sp2.model)
-
-my_dual_2 = dual.(sp2.stage_constraints)
-sc_val2 = SQLP.eval_dual(coef, my_x, my_dual_2, my_scenario_2)
-
-@test sc_val2_true == sc_val2
-
 # Test for delta coefficients
 SQLP.instantiate!(sp2, my_scenario_2) # RHS, S2C5 => 3.0
 coef = SQLP.extract_coefficients(sp2)
@@ -70,3 +46,27 @@ delta = SQLP.delta_coefficients(coef, my_scenario) # RHS, S2C5 => 5.0, so delta 
 ind = coef.row_lookup["S2C5"]
 @test delta.delta_rhs[ind] == 2.0
 @test sum(delta.delta_transfer) == 0.0
+
+# Test for eval_dual
+# Calculate true answers first.
+my_x = [3.0, 3.0, 3.0, 3.0]
+
+fix.(sp2.last_stage_vars, my_x, force=true)
+SQLP.instantiate!(sp2, my_scenario)
+optimize!(sp2.model)
+my_dual = dual.(sp2.stage_constraints)
+sc_val1_true = objective_value(sp2.model)
+
+SQLP.instantiate!(sp2, my_scenario_2)
+optimize!(sp2.model)
+my_dual_2 = dual.(sp2.stage_constraints)
+sc_val2_true = objective_value(sp2.model)
+
+# Now for eval_dual
+delta = SQLP.delta_coefficients(coef, my_scenario)
+delta2 = SQLP.delta_coefficients(coef, my_scenario_2)
+
+sc_val1 = SQLP.eval_dual(coef, delta, my_x, my_dual)
+sc_val2 = SQLP.eval_dual(coef, delta2, my_x, my_dual_2)
+@test sc_val1_true == sc_val1
+@test sc_val2_true == sc_val2

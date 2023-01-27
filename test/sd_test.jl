@@ -1,4 +1,8 @@
-using SQLP, JuMP, CPLEX, Test
+using SQLP, MathOptInterface, JuMP, GLPK, Test
+const MOI = MathOptInterface
+
+optimizer = GLPK.Optimizer
+
 cor = SQLP.read_cor(joinpath("spInput", "lands", "lands.cor"))
 tim = SQLP.read_tim(joinpath("spInput", "lands", "lands.tim"))
 sto = SQLP.read_sto(joinpath("spInput", "lands", "lands.sto"))
@@ -6,8 +10,7 @@ sto = SQLP.read_sto(joinpath("spInput", "lands", "lands.sto"))
 # the stage templates
 sp1 = SQLP.get_smps_stage_template(cor, tim, 1)
 sp2 = SQLP.get_smps_stage_template(cor, tim, 2)
-set_optimizer(sp2.model, CPLEX.Optimizer)
-set_silent(sp2.model)
+set_optimizer(sp2.model, optimizer)
 
 # Create cell
 cell = SQLP.sdCell()
@@ -33,6 +36,7 @@ coef = SQLP.extract_coefficients(sp2)
 # Test modify coefficients
 my_scenario = [SQLP.spSmpsPosition("RHS", "S2C5") => 5.0]
 my_scenario_2 = [SQLP.spSmpsPosition("RHS", "S2C5") => 3.0]
+my_scenario_3 = [SQLP.spSmpsPosition("RHS", "S2C5") => 7.0]
 
 SQLP.modify_coefficients!(coef, my_scenario)
 @test coef.rhs[coef.row_lookup["S2C5"]] == 5.0
@@ -70,3 +74,16 @@ sc_val1 = SQLP.eval_dual(coef, delta, my_x, my_dual)
 sc_val2 = SQLP.eval_dual(coef, delta2, my_x, my_dual_2)
 @test sc_val1_true == sc_val1
 @test sc_val2_true == sc_val2
+
+# Test argmax procedure
+# Two solutions
+x1 = [3.0, 3.0, 3.0, 3.0]
+x2 = [2.0, 4.0, 2.0, 6.0]
+@test SQLP.check_first_stage_feasible(sp1, x1; optimizer=optimizer)
+@test SQLP.check_first_stage_feasible(sp1, x2; optimizer=optimizer)
+
+coef = SQLP.extract_coefficients(sp2)
+scenario_set = [my_scenario, my_scenario, my_scenario_2, my_scenario_3]
+delta_set = SQLP.delta_coefficients.(Ref(coef), scenario_set)
+
+SQLP.argmax_procedure(coef, delta_set, )

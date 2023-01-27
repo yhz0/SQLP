@@ -133,9 +133,28 @@ Find the dual extreme point in the dual_set that yields the highest cut at given
 Returns a tuple: (arg, val, alpha, beta)
 arg: the dual vertice that gives the highest cut.
 val: the value of that cut at x
-alpha, beta: cut coefficients from pi*r and -pi*T
 """
-function argmax_procedure(coef::sdSubprobCoefficients, delta::sdDeltaCoefficients, x::Vector{Float64}, dual_set)
+function argmax_procedure(coef::sdSubprobCoefficients, delta_set::Vector{sdDeltaCoefficients}, x::Vector{Float64}, dual_set)
+    max_arg = Vector{Float64}[]
+    max_val = Float64[]
 
-    error("Unimplemented")
+    base_vector = coef.rhs - coef.transfer * x
+    for delta in delta_set
+        delta_vector = delta.delta_rhs - delta.delta_transfer * x
+
+        current_max_val = -Inf
+        current_arg = zeros(length(delta_vector))
+
+        for p in dual_set
+            current_val = dot(p, base_vector + delta_vector) 
+            if current_val > current_max_val
+                current_max_val = current_val
+                current_arg .= p
+            end
+        end
+        push!(max_val, current_max_val)
+        push!(max_arg, current_arg)
+    end
+
+    return max_val, max_arg
 end

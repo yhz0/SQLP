@@ -66,7 +66,7 @@ scenario = rand(sto)
 @test scenario[1].second in [3.0, 5.0, 7.0]
 
 # Test change subproblem
-scenario = [SQLP.spSmpsPosition("RHS", "S2C5") => 4.0]
+scenario = SQLP.spSmpsScenario[SQLP.spSmpsPosition("RHS", "S2C5") => 4.0]
 SQLP.instantiate!(sp2, scenario)
 @test normalized_rhs(constraint_by_name(sp2.model, "S2C5")) == 4.0
 

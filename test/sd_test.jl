@@ -82,8 +82,26 @@ x2 = [2.0, 4.0, 2.0, 6.0]
 @test SQLP.check_first_stage_feasible(sp1, x1; optimizer=optimizer)
 @test SQLP.check_first_stage_feasible(sp1, x2; optimizer=optimizer)
 
+# Some scenarios
 coef = SQLP.extract_coefficients(sp2)
 scenario_set = SQLP.spSmpsScenario[my_scenario, my_scenario, my_scenario_2, my_scenario_3]
 delta_set = SQLP.delta_coefficients.(Ref(coef), scenario_set)
 
-# SQLP.argmax_procedure(coef, delta_set, )
+# Generate some dual points with x1
+dual_points = Vector{Float64}[]
+for scenario in scenario_set
+    v, y, p = SQLP.solve_problem!(sp2, x1, scenario)
+    push!(dual_points, p)
+end
+dual_points = unique(dual_points)
+@test length(dual_points) == 3
+
+val, arg = SQLP.argmax_procedure(coef, delta_set, x2, dual_points)
+
+# These dual points are sufficient.
+# so the objective value should be the same as solving it directly.
+for i in eachindex(scenario_set)
+    v, y, p = SQLP.solve_problem!(sp2, x2, scenario_set[i])
+    @test val[i] == v
+end
+

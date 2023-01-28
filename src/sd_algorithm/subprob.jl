@@ -137,7 +137,7 @@ val: the value of that cut at x
 """
 function argmax_procedure(coef::sdSubprobCoefficients, delta_set::Vector{sdDeltaCoefficients},
     x::Vector{Float64}, dual_set)
-    max_arg = Vector{Float64}[]
+    max_arg = Ref{Vector{Float64}}[]
     max_val = Float64[]
 
     base_vector = coef.rhs - coef.transfer * x
@@ -145,13 +145,13 @@ function argmax_procedure(coef::sdSubprobCoefficients, delta_set::Vector{sdDelta
         delta_vector = delta.delta_rhs - delta.delta_transfer * x
 
         current_max_val = -Inf
-        current_arg = zeros(length(delta_vector))
+        current_arg = Ref{Vector{Float64}}()
 
         for p in dual_set
             current_val = dot(p, base_vector + delta_vector) 
             if current_val > current_max_val
                 current_max_val = current_val
-                current_arg .= p
+                current_arg = p
             end
         end
         push!(max_val, current_max_val)

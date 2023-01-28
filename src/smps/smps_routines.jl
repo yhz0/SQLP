@@ -42,12 +42,12 @@ end
 # end
 
 """
-Solve the subproblem with given last_stage_vars. Will overwrite the coefficients in the sp,
+Solve the (sub)problem with given last_stage_vars. Will overwrite the coefficients in the sp,
 and set fix bounds on last_stage_val.
 Returns a tuple (obj, y_opt, dual_opt), which is the optimal objective, optimal (subproblem)
 decision and optimal dual multipliers.
 """
-function solve_subproblem!(sp::spStageProblem, last_stage_val::Vector{Float64}, scenario::spSmpsScenario)
+function solve_problem!(sp::spStageProblem, last_stage_val::Vector{Float64}, scenario::spSmpsScenario)
     instantiate!(sp, scenario)
     fix.(sp.last_stage_vars, last_stage_val, force=true)
     optimize!(sp.model)

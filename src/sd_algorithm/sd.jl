@@ -4,4 +4,5 @@ using LinearAlgebra
 include("subprob.jl")
 include("epigraph.jl")
 include("cell.jl")
+include("algorithm.jl")
 

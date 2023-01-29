@@ -12,17 +12,6 @@ sp1 = SQLP.get_smps_stage_template(cor, tim, 1)
 sp2 = SQLP.get_smps_stage_template(cor, tim, 2)
 set_optimizer(sp2.model, optimizer)
 
-# Create cell
-cell = SQLP.sdCell()
-@test cell !== nothing
-
-# Initialze master
-SQLP.initialize_master!(cell, sp1)
-
-@test length(cell.x_ref) == 4
-@test length(cell.root_stage_con) == 2
-@test cell.x_ref[1].model === cell.master
-
 # ===== subprob.jl
 # Test extract coefficients
 coef = SQLP.extract_coefficients(sp2)
@@ -103,4 +92,26 @@ for i in eachindex(scenario_set)
     v, y, p = SQLP.solve_problem!(sp2, x2, scenario_set[i])
     @test val[i] == v
 end
+
+# Another test case
+begin
+    x = [2, 3, 4, 5.]
+    v, y, p = SQLP.solve_problem!(sp2, x, my_scenario_3)
+    d = SQLP.delta_coefficients(coef, my_scenario_3)
+    subgrad = - (d.delta_transfer + coef.transfer)' * p
+    @test subgrad == [-11.0, -6.0, -19.0, 0.0]
+end
+
+# === cell.jl
+
+# Create cell
+cell = SQLP.sdCell()
+@test cell !== nothing
+
+# Initialze master
+SQLP.initialize_cell!(cell, sp1)
+
+@test length(cell.x_ref) == 4
+@test length(cell.root_stage_con) == 2
+@test cell.x_ref[1].model === cell.master
 

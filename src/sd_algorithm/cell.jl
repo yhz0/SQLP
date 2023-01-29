@@ -34,6 +34,22 @@ function sdCell(root_prob::spStageProblem)
     return sdCell(master, x_ref, root_stage_con, epivar_ref, epi, reg)
 end
 
+"""
+Pretty print sdCell structure.
+"""
+function Base.show(io::IO, cell::sdCell)
+    println(io, "sdCell")
+    master_con_cnt = num_constraints(cell.master;
+        count_variable_in_set_constraints = false)
+    master_var_cnt = num_variables(cell.master)
+    println(io, "Master con_cnt=$master_con_cnt var_cnt=$master_var_cnt")
+    epi_cnt = length(cell.epi)
+    println(io, "Epigraph cnt=$epi_cnt")
+    for epi in cell.epi
+        println(io, epi)
+    end
+    return
+end
 
 """
 Do an iteration of SD given the scenario list.

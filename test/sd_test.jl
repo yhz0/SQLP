@@ -112,7 +112,6 @@ cell = SQLP.sdCell(sp1)
 
 
 # === epigraph.jl
-
 epi = SQLP.sdEpigraph(sp2, 0.5)
 # Test copy
 @test epi.prob !== nothing
@@ -120,3 +119,6 @@ epi = SQLP.sdEpigraph(sp2, 0.5)
 @test is_valid(epi.prob.model, epi.prob.current_stage_vars[1])
 @test !is_valid(epi.prob.model, sp2.current_stage_vars[1])
 
+epi2 = SQLP.sdEpigraph(sp2, 0.5)
+push!(cell.epi, epi)
+push!(cell.epi, epi2)

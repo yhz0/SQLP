@@ -66,7 +66,7 @@ function Base.show(io::IO, epi::sdEpigraph)
     if epi.incumbent_cut !== nothing
         cut_cnt = cut_cnt + 1
     end
-    print(io, "Epigraph objw=$objw sc_cnt=$sc_cnt sc_w=$sc_w cut_cnt=$cut_cnt")
+    print(io, "sdEpigraph objw=$objw sc_cnt=$sc_cnt sc_w=$sc_w cut_cnt=$cut_cnt")
     return
 end
 

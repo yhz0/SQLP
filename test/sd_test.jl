@@ -88,12 +88,11 @@ scenario_set = SQLP.spSmpsScenario[my_scenario, my_scenario, my_scenario_2, my_s
 delta_set = SQLP.delta_coefficients.(Ref(coef), scenario_set)
 
 # Generate some dual points with x1
-dual_points = Vector{Float64}[]
+dual_points = Set{Vector{Float64}}()
 for scenario in scenario_set
     v, y, p = SQLP.solve_problem!(sp2, x1, scenario)
     push!(dual_points, p)
 end
-dual_points = unique(dual_points)
 @test length(dual_points) == 3
 
 val, arg = SQLP.argmax_procedure(coef, delta_set, x2, dual_points)

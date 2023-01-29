@@ -103,15 +103,20 @@ begin
 end
 
 # === cell.jl
+cell = SQLP.sdCell(sp1)
+@test cell.master !== nothing
+# Test if the references are copied correctly
+@test cell.master !== sp1.model
+@test is_valid(cell.master, cell.x_ref[1])
+@test !is_valid(cell.master, sp1.current_stage_vars[1])
 
-# Create cell
-cell = SQLP.sdCell()
-@test cell !== nothing
 
-# Initialze master
-SQLP.initialize_cell!(cell, sp1)
+# === epigraph.jl
 
-@test length(cell.x_ref) == 4
-@test length(cell.root_stage_con) == 2
-@test cell.x_ref[1].model === cell.master
+epi = SQLP.sdEpigraph(sp2, 0.5)
+# Test copy
+@test epi.prob !== nothing
+@test epi.prob.model !== sp2.model
+@test is_valid(epi.prob.model, epi.prob.current_stage_vars[1])
+@test !is_valid(epi.prob.model, sp2.current_stage_vars[1])
 

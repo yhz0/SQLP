@@ -25,3 +25,15 @@ function check_first_stage_feasible(sp1::spStageProblem, x::Vector{Float64}; opt
         return false
     end
 end
+
+"""
+Copy the problem and its underlying model.
+"""
+function Base.copy(prob::spStageProblem)::spStageProblem
+    new_model, refmap = copy_model(prob.model)
+    last_stage_vars = [refmap[v] for v in prob.last_stage_vars]
+    current_stage_vars = [refmap[v] for v in prob.current_stage_vars]
+    stage_constraints = [refmap[v] for v in prob.stage_constraints]
+    return spStageProblem(
+        new_model, last_stage_vars, current_stage_vars, stage_constraints)
+end

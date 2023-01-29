@@ -16,25 +16,42 @@ mutable struct sdCell
     # Regularization strength
     reg::Float64
 
-    sdCell() = new()
 end
 
 """
 Copy master problem and master constraints into the cell.
 """
-function initialize_cell!(cell::sdCell, sp1::spStageProblem)
-    cell.master, refmap = JuMP.copy_model(sp1.model)
-    cell.x_ref = [refmap[v] for v in sp1.current_stage_vars]
-    cell.root_stage_con = [refmap[c] for c in sp1.stage_constraints]
-    cell.epivar_ref = []
-    return
+function sdCell(root_prob::spStageProblem)
+    # Initialize master problem by copying
+    new_root_prob::spStageProblem = copy(root_prob)
+    master = new_root_prob.model
+    x_ref = new_root_prob.current_stage_vars
+    root_stage_con = new_root_prob.stage_constraints
+
+    epivar_ref = []
+    epi = []
+    reg = 0.0
+    return sdCell(master, x_ref, root_stage_con, epivar_ref, epi, reg)
+end
+
+
+"""
+Do an iteration of SD given the scenario list.
+"""
+function standard_sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenario})
+    # Make sure the length of the epigraph variable is the same.
+    @assert(length(scenario_list) == length(cell.epivar_ref))
+
+    for i in eachindex(scenario_list)
+        add_scenario!(cell.epi[i], scenario_list[i], 1.0)
+    end
+
+    error("Unimplemented")
 end
 
 """
-Add a scenario to epigraph variable epi.
+Check stopping criteria.
 """
-function add_scenario(epi::sdEpigraph, scenario::spSmpsScenario, weight::Float64)
-    push!(epi.scenarios, scenario)
-    push!(epi.scenario_weight, weight)
-    epi.total_scenario_weight += weight
+function stopping_criteria()::Bool
+    error("Unimplemented")
 end

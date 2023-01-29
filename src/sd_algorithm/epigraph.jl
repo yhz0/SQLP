@@ -77,7 +77,7 @@ Add a scenario to epigraph variable epi.
 function add_scenario!(
     epi::sdEpigraph,
     scenario::spSmpsScenario,
-    weight::Float64)
+    weight::Float64 = 1.0)
 
     # Record raw scenario
     push!(epi.scenario_list, scenario)
@@ -86,5 +86,7 @@ function add_scenario!(
 
     # Calculate delta coefficients, store.
     delta = delta_coefficients(epi.subproblem_coef, scenario)
-    push!(scenario_delta, delta)
+    push!(epi.scenario_delta, delta)
+    
+    return
 end

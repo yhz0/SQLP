@@ -79,7 +79,7 @@ delta_set = SQLP.delta_coefficients.(Ref(coef), scenario_set)
 # Generate some dual points with x1
 dual_points = Set{Vector{Float64}}()
 for scenario in scenario_set
-    v, y, p = SQLP.solve_problem!(sp2, x1, scenario)
+    local v, y, p = SQLP.solve_problem!(sp2, x1, scenario)
     push!(dual_points, p)
 end
 @test length(dual_points) == 3
@@ -89,14 +89,14 @@ val, arg = SQLP.argmax_procedure(coef, delta_set, x2, dual_points)
 # These dual points are sufficient.
 # so the objective value should be the same as solving it directly.
 for i in eachindex(scenario_set)
-    v, y, p = SQLP.solve_problem!(sp2, x2, scenario_set[i])
+    local v, y, p = SQLP.solve_problem!(sp2, x2, scenario_set[i])
     @test val[i] == v
 end
 
 # Another test case
 begin
     x = [2, 3, 4, 5.]
-    v, y, p = SQLP.solve_problem!(sp2, x, my_scenario_3)
+    local v, y, p = SQLP.solve_problem!(sp2, x, my_scenario_3)
     d = SQLP.delta_coefficients(coef, my_scenario_3)
     subgrad = - (d.delta_transfer + coef.transfer)' * p
     @test subgrad == [-11.0, -6.0, -19.0, 0.0]
@@ -110,6 +110,7 @@ cell = SQLP.sdCell(sp1)
 @test is_valid(cell.master, cell.x_ref[1])
 @test !is_valid(cell.master, sp1.current_stage_vars[1])
 
+@test length(cell.x_candidate) == 4
 
 # === epigraph.jl
 epi = SQLP.sdEpigraph(sp2, 0.5)
@@ -122,3 +123,12 @@ epi = SQLP.sdEpigraph(sp2, 0.5)
 epi2 = SQLP.sdEpigraph(sp2, 0.5)
 push!(cell.epi, epi)
 push!(cell.epi, epi2)
+
+# Add scenario
+SQLP.add_scenario!(cell.epi[1], my_scenario, 1.0)
+SQLP.add_scenario!(cell.epi[1], my_scenario_2, 1.0)
+
+SQLP.add_scenario!(cell.epi[2], my_scenario_2, 1.0)
+SQLP.add_scenario!(cell.epi[2], my_scenario_3, 1.0)
+
+@test cell.epi[1].total_scenario_weight == 2.0

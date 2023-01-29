@@ -16,6 +16,12 @@ mutable struct sdCell
     # Regularization strength
     reg::Float64
 
+    # Dual vertices found so far (Warning: concurrent issues)
+    dual_vertices::Set{Vector{Float64}}
+
+    # Candidate and incumbent solutions found so far
+    x_candidate::Vector{Float64}
+    x_incumbent::Vector{Float64}
 end
 
 """
@@ -31,7 +37,10 @@ function sdCell(root_prob::spStageProblem)
     epivar_ref = []
     epi = []
     reg = 0.0
-    return sdCell(master, x_ref, root_stage_con, epivar_ref, epi, reg)
+
+    xlen = length(x_ref)
+    return sdCell(master, x_ref, root_stage_con, epivar_ref, epi, reg,
+        Set{Vector{Float64}}(), zeros(xlen), zeros(xlen))
 end
 
 """
@@ -68,6 +77,6 @@ end
 """
 Check stopping criteria.
 """
-function stopping_criteria()::Bool
+function stopping_criteria(cell::sdCell)::Bool
     error("Unimplemented")
 end

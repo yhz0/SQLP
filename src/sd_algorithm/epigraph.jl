@@ -1,6 +1,6 @@
 """
-A representation of a cut under an epigrpah in SD.
-Stands for η≥α+βx.
+A representation of a cut under an epigraph in SD.
+Stands for η≥α+βx. Note that cuts stored here are never scaled.
 """
 struct sdCut
     # Coefficients stands for alpha + beta' x
@@ -21,6 +21,9 @@ mutable struct sdEpigraph
 
     # Epigraph weights relative to the master problem.
     objective_weight::Float64
+
+    # Absolute lower bound of the second stage
+    lower_bound::Float64
 
     # Subproblem template coefficients shared by all scenarios.
     subproblem_coef::sdSubprobCoefficients
@@ -46,12 +49,13 @@ overwrite each other in parallel version.
 """
 function sdEpigraph(
     prob::spStageProblem,
-    objective_weight::Float64)
+    objective_weight::Float64,
+    lower_bound::Float64)
     
     new_prob = copy(prob)
     coef = extract_coefficients(new_prob)
     
-    return sdEpigraph(new_prob, objective_weight,
+    return sdEpigraph(new_prob, objective_weight, lower_bound,
         coef, [], 0.0, [], [], [], nothing)
 end
 
@@ -89,4 +93,13 @@ function add_scenario!(
     push!(epi.scenario_delta, delta)
     
     return
+end
+
+"""
+Build a cut at given last_stage_var x and partial dual_vertices.
+"""
+function build_sasa_cut(epi::sdEpigraph, x::Vector{Float64},
+    dual_vertices::Union{Set{Vector{Float64}}, Vector{Vector{Float64}}})::sdCut
+    
+    error("Unimplemented")
 end

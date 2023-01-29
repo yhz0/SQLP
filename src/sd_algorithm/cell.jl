@@ -8,10 +8,17 @@ mutable struct sdCell
     # Reference to first stage variables, constraints, epigrpah in master problem
     x_ref::Vector{VariableRef}
     root_stage_con::Vector{ConstraintRef}
-    epivar_ref::Vector{VariableRef}
+
+    # Objective function expression in the master, incl epigraph terms,
+    # but without the prox terms
+    objf::QuadExpr
 
     # Epigraph information
     epi::Vector{sdEpigraph}
+
+    # Epigraph variables and constraints in the master
+    epivar_ref::Vector{VariableRef}
+    epicon_ref::Vector{Vector{ConstraintRef}}
 
     # Regularization strength
     reg::Float64
@@ -33,14 +40,17 @@ function sdCell(root_prob::spStageProblem)
     master = new_root_prob.model
     x_ref = new_root_prob.current_stage_vars
     root_stage_con = new_root_prob.stage_constraints
+    objf = objective_function(master)
 
     epivar_ref = []
+    epicon_ref = []
     epi = []
     reg = 0.0
 
     xlen = length(x_ref)
-    return sdCell(master, x_ref, root_stage_con, epivar_ref, epi, reg,
-        Set{Vector{Float64}}(), zeros(xlen), zeros(xlen))
+    return sdCell(master, x_ref, root_stage_con, objf,
+        epi, epivar_ref, epicon_ref,
+        reg, Set{Vector{Float64}}(), zeros(xlen), zeros(xlen))
 end
 
 """
@@ -59,3 +69,21 @@ function Base.show(io::IO, cell::sdCell)
     end
     return
 end
+
+"""
+Add epigraph variable to cell. Will update the objective function.
+"""
+function bind_epigraph!(cell::sdCell, epi::sdEpigraph)
+    push!(cell.epi, epi)
+
+    epiv = @variable(cell.master)
+    set_lower_bound(epiv, epi.lower_bound)
+
+    push!(cell.epivar_ref, epiv)
+    push!(cell.epicon_ref, [])
+
+    add_to_expression!(cell.objf, epi.objective_weight, epiv)
+    set_objective_function(cell.master, cell.objf)
+    return
+end
+

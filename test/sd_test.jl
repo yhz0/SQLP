@@ -111,20 +111,32 @@ cell = SQLP.sdCell(sp1)
 @test !is_valid(cell.master, sp1.current_stage_vars[1])
 
 @test length(cell.x_candidate) == 4
+@test cell.objf == QuadExpr([10, 7, 16, 6]' * cell.x_ref)
 
 # === epigraph.jl
-epi = SQLP.sdEpigraph(sp2, 0.5)
+epi = SQLP.sdEpigraph(sp2, 0.5, 0.0)
 # Test copy
 @test epi.prob !== nothing
 @test epi.prob.model !== sp2.model
 @test is_valid(epi.prob.model, epi.prob.current_stage_vars[1])
 @test !is_valid(epi.prob.model, sp2.current_stage_vars[1])
 
-epi2 = SQLP.sdEpigraph(sp2, 0.5)
-push!(cell.epi, epi)
-push!(cell.epi, epi2)
+epi2 = SQLP.sdEpigraph(sp2, 0.5, 0.0)
 
-# Add scenario
+# Test binding epigraph
+SQLP.bind_epigraph!(cell, epi)
+SQLP.bind_epigraph!(cell, epi2)
+@test epi === cell.epi[1]
+@test length(cell.epi) == 2
+@test length(cell.epicon_ref) == 2
+@test length(cell.epivar_ref) == 2
+@test is_valid(cell.master, cell.epivar_ref[1])
+@test lower_bound(cell.epivar_ref[1]) == cell.epi[1].lower_bound
+
+@test cell.objf == 
+    QuadExpr([10, 7, 16, 6]' * cell.x_ref + [0.5, 0.5]' * cell.epivar_ref)
+
+# Add scenario to epigraph
 SQLP.add_scenario!(cell.epi[1], my_scenario, 1.0)
 SQLP.add_scenario!(cell.epi[1], my_scenario_2, 1.0)
 

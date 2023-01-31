@@ -124,9 +124,33 @@ function build_sasa_cut(epi::sdEpigraph, x::Vector{Float64},
 end
 
 """
-Evaluate the epigraph variable at a certain x. Does not check feasibility.
+Evaluate the pointwise min(or max) at a certain x, given discount, and lower bound.
 """
-function evaluate_cut(epi::sdEpigraph, x::Vector{Float64})
-    # TODO
-    error("Unimplemented")
+function evaluate_epigraph(epi::sdEpigraph, x::Vector{Float64})
+    sense = objective_sense(epi.prob.model)
+    @assert(sense == MIN_SENSE || sense == MAX_SENSE)
+    
+    best_val = epi.lower_bound
+
+    for cut::sdCut in epi.cuts
+        discount = cut.weight_mark / epi.total_scenario_weight
+        val = discount * (cut.alpha + dot(cut.beta, x)) + (1-discount) * epi.lower_bound
+        if sense == MIN_SENSE && val > best_val
+            best_val = val
+        elseif sense == MAX_SENSE && val < best_val
+            best_val = val
+        end
+    end
+
+    # Eval at Incumbent cut if needed
+    if epi.incumbent_cut !== nothing
+        val = epi.incumbent_cut.alpha + dot(epi.incumbent_cut.beta, x)
+        if sense == MIN_SENSE && val > best_val
+            best_val = val
+        elseif sense == MAX_SENSE && val < best_val
+            best_val = val
+        end
+    end
+
+    return best_val
 end

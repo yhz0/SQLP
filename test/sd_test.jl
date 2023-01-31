@@ -185,4 +185,9 @@ SQLP.sync_cuts!(cell)
 # so the added cut should has rhs 100*0.5+1.0*0.5=50.5
 @test normalized_rhs(cell.epicon_ref[2][1]) == 50.5
 
+# Test evaluate_epigraph
+@test SQLP.evaluate_epigraph(cell.epi[1], [10.0, 10.0, 10.0, 10.0]) == 551.0
+# test if the discount is applied correctly and the lower bound is applied
+@test SQLP.evaluate_epigraph(cell.epi[2], [10.0, 10.0, 10.0, 10.0]) == 141/2 + 100/2
+@test SQLP.evaluate_epigraph(cell.epi[2], [-1.0, -1, -1, -1]) == 100.0
 

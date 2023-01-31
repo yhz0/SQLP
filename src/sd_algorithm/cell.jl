@@ -81,6 +81,10 @@ end
 Add epigraph variable to cell. Will update the objective function.
 """
 function bind_epigraph!(cell::sdCell, epi::sdEpigraph)
+    # Check that the cell and epi problems has the same direction
+    # of optimization (MIN or MAX)
+    @assert(objective_sense(cell.master) == objective_sense(epi.prob.model))
+
     push!(cell.epi, epi)
 
     epiv = @variable(cell.master)

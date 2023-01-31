@@ -16,9 +16,12 @@ A convex piecewise function approximation.
 """
 mutable struct sdEpigraph
     # Subproblem corresponding to this epigraph variable.
+    # The model under this stage problem should be unique to this instance.
+    # and may be changed externally (e.g. solve_subproblem)
     prob::spStageProblem
 
     # Subproblem template coefficients shared by all scenarios.
+    # Once Initialized this coefficient is guaranteed not to change.
     subproblem_coef::sdSubprobCoefficients
 
     # Epigraph weights relative to the master problem.
@@ -116,11 +119,31 @@ end
 
 """
 Build a cut at given last_stage_var x and partial dual_vertices by argmax procedure.
+Calculates α+βx=sum(pj π(x, ωj)(rj - Tj x)).
+pi is the relatative weight of a sample in this epigraph, proportional
+to weight_i and sums to 1.
 """
 function build_sasa_cut(epi::sdEpigraph, x::Vector{Float64},
-    dual_vertices::Union{Set{Vector{Float64}}, Vector{Vector{Float64}}})::sdCut
-    # TODO
-    error("Unimplemented")
+    dual_vertices::sdDualSet)::sdCut
+    max_val, max_arg = argmax_procedure(epi.subproblem_coef, epi.scenario_delta,
+        x, dual_vertices)
+
+    alpha::Float64 = 0.0
+    beta::Vector{Float64} = zeros(length(x))
+    val::Float64 = 0.0
+
+    for i in eachindex(dual_vertices)
+        # dual vertex chosen
+        dual = max_arg[i]
+        # weight
+        p = epi.scenario_weight[i] / epi.total_scenario_weight
+
+        alpha += p * dot(dual, epi.subproblem_coef.rhs + epi.scenario_delta[i].delta_rhs)
+        beta += p * (epi.subproblem_coef.transfer + epi.scenario_delta[i].delta_transfer)' * x
+        val += p * max_val[i]
+    end
+
+    return sdCut(alpha, beta, epi.total_scenario_weight)
 end
 
 """

@@ -130,13 +130,19 @@ function eval_dual(coef::sdSubprobCoefficients, delta::sdDeltaCoefficients,x::Ve
 end
 
 """
+Structure used to store dual vertices.
+Either a set of vectors or non-unique vector of vectors.
+"""
+sdDualSet = Union{Set{Vector{Float64}}, Vector{Vector{Float64}}}
+
+"""
 Find the dual extreme point in the dual_set that yields the highest cut at given x.
 Returns a tuple: (arg, val, alpha, beta)
 arg: the dual vertice that gives the highest cut.
 val: the value of that cut at x
 """
 function argmax_procedure(coef::sdSubprobCoefficients, delta_set::Vector{sdDeltaCoefficients},
-    x::Vector{Float64}, dual_set)::Tuple{Vector{Float64}, Vector{Ref{Vector{Float64}}}}
+    x::Vector{Float64}, dual_vertices::sdDualSet)::Tuple{Vector{Float64}, Vector{Ref{Vector{Float64}}}}
     max_arg = Ref{Vector{Float64}}[]
     max_val = Float64[]
 
@@ -147,8 +153,10 @@ function argmax_procedure(coef::sdSubprobCoefficients, delta_set::Vector{sdDelta
         current_max_val = -Inf
         current_arg = Ref{Vector{Float64}}()
 
-        for p in dual_set
-            current_val = dot(p, base_vector + delta_vector) 
+        for p in dual_vertices
+            current_val = dot(p, base_vector) + dot(p, delta_vector) 
+            # TODO: look at sense. If it is max sense then take min instead!
+            # Also be careful what it is doing when the dual comes from MAX!!
             if current_val > current_max_val
                 current_max_val = current_val
                 current_arg = p

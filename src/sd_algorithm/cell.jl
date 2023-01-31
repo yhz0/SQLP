@@ -20,7 +20,7 @@ mutable struct sdCell
     epivar_ref::Vector{VariableRef}
     epicon_ref::Vector{Vector{ConstraintRef}}
 
-    # Regularization strength
+    # Regularization strength; might not be used
     reg::Float64
 
     # Dual vertices found so far (Warning: concurrent issues)
@@ -87,3 +87,74 @@ function bind_epigraph!(cell::sdCell, epi::sdEpigraph)
     return
 end
 
+"""
+Reset the cell objective to the one without regularization term,
+keeping the epigraph variable settings.
+"""
+function reset_objective!(cell::sdCell)
+    set_objective_function(cell.master, cell.objf)
+    return
+end
+
+"""
+Add regularization with respect to a point x0. Will reset the objective first.
+"""
+function add_regularization!(cell::sdCell, x0::Vector{Float64}, rho::Float64)
+    reg_terms = sum(rho/2 * (cell.x_ref[i] - x0[i])^2 for i in eachindex(x0))
+    set_objective_function(cell.master, cell.objf + reg_terms)
+    return
+end
+
+"""
+Reset the cell to its setup state, removing the regularization terms
+and all epigraph cuts.
+"""
+function reset_cell!(cell::sdCell)
+    # Remove the constraints
+    for cons in cell.epicon_ref
+        for con in cons
+            delete(cell.master, con)
+        end
+        empty!(cons)
+    end
+
+    reset_objective!(cell)
+
+    return
+end
+
+"""
+Add the epigraph to a specified epigraph variable.
+This will not add any cut if the total epigraph scenario weight is 0.
+"""
+function add_epi_cuts!(cell::sdCell, epi::sdEpigraph, epi_num::Int)
+    if epi.total_scenario_weight == 0.0
+        return
+    end
+    
+    epi_ref = cell.epivar_ref[epi_num]
+    x_ref = cell.epivar_ref
+
+    for cut in epi.cuts
+        discount = cut.weight_mark / epi.total_scenario_weight
+        
+        # Calculate the coefficients
+        new_alpha = discount*cut.alpha + (1-discount)*epi.lower_bound
+        new_beta = discount*beta
+        con = @constraint(cell.master, epi_ref >= new_alpha + dot(new_beta, x_ref))
+        
+        # Record the reference to that constraint
+        push!(cell.epicon_ref[epi_num], con)
+    end
+
+    return
+end
+
+"""
+Reset the cell and add all epigragh cuts in a cell.
+"""
+function add_all_cuts!(cell::sdCell)
+    for (i, epi) in cell.epi
+        add_epi_cuts!(cell, epi, i)
+    end
+end

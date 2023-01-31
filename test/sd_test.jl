@@ -144,3 +144,9 @@ SQLP.add_scenario!(cell.epi[2], my_scenario_2, 1.0)
 SQLP.add_scenario!(cell.epi[2], my_scenario_3, 1.0)
 
 @test cell.epi[1].total_scenario_weight == 2.0
+
+# TODO: Test add_regularization, reset objective
+
+# TODO: Test add_epi_cuts, add_all_cuts
+
+# TODO: Test reset_cell

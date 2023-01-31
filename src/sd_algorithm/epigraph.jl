@@ -18,14 +18,14 @@ mutable struct sdEpigraph
     # Subproblem corresponding to this epigraph variable.
     prob::spStageProblem
 
+    # Subproblem template coefficients shared by all scenarios.
+    subproblem_coef::sdSubprobCoefficients
+
     # Epigraph weights relative to the master problem.
     objective_weight::Float64
 
     # Absolute lower bound of the second stage
     lower_bound::Float64
-
-    # Subproblem template coefficients shared by all scenarios.
-    subproblem_coef::sdSubprobCoefficients
 
     # Scenario weights
     scenario_weight::Vector{Float64}
@@ -54,8 +54,8 @@ function sdEpigraph(
     new_prob = copy(prob)
     coef = extract_coefficients(new_prob)
     # TODO: change order of data structure member
-    return sdEpigraph(new_prob, objective_weight, lower_bound,
-        coef, [], 0.0, [], [], [], nothing)
+    return sdEpigraph(new_prob, coef, objective_weight, lower_bound,
+        [], 0.0, [], [], [], nothing)
 end
 
 """
@@ -115,7 +115,7 @@ function add_cut_to_master!(master::Model, cut::sdCut,
 end
 
 """
-Build a cut at given last_stage_var x and partial dual_vertices.
+Build a cut at given last_stage_var x and partial dual_vertices by argmax procedure.
 """
 function build_sasa_cut(epi::sdEpigraph, x::Vector{Float64},
     dual_vertices::Union{Set{Vector{Float64}}, Vector{Vector{Float64}}})::sdCut

@@ -136,7 +136,7 @@ arg: the dual vertice that gives the highest cut.
 val: the value of that cut at x
 """
 function argmax_procedure(coef::sdSubprobCoefficients, delta_set::Vector{sdDeltaCoefficients},
-    x::Vector{Float64}, dual_set)
+    x::Vector{Float64}, dual_set)::Tuple{Vector{Float64}, Vector{Ref{Vector{Float64}}}}
     max_arg = Ref{Vector{Float64}}[]
     max_val = Float64[]
 

@@ -121,7 +121,8 @@ epi = SQLP.sdEpigraph(sp2, 0.5, 0.0)
 @test is_valid(epi.prob.model, epi.prob.current_stage_vars[1])
 @test !is_valid(epi.prob.model, sp2.current_stage_vars[1])
 
-epi2 = SQLP.sdEpigraph(sp2, 0.5, 0.0)
+# Epigraph With lower bounds
+epi2 = SQLP.sdEpigraph(sp2, 0.5, 100.0)
 
 # Test binding epigraph
 SQLP.bind_epigraph!(cell, epi)
@@ -129,6 +130,7 @@ SQLP.bind_epigraph!(cell, epi2)
 @test epi === cell.epi[1]
 @test length(cell.epi) == 2
 @test length(cell.epicon_ref) == 2
+@test length(cell.epicon_incumbent_ref) == 2
 @test length(cell.epivar_ref) == 2
 @test is_valid(cell.master, cell.epivar_ref[1])
 @test lower_bound(cell.epivar_ref[1]) == cell.epi[1].lower_bound
@@ -167,11 +169,22 @@ inc_cut = SQLP.sdCut(11, [12.0, 13.0, 14.0, 15.0], 1.0)
 push!(cell.epi[1].cuts, cut1)
 push!(cell.epi[1].cuts, cut2)
 cell.epi[1].incumbent_cut = inc_cut
+push!(cell.epi[2].cuts, cut1)
 
-# TODO: debug
 SQLP.sync_cuts!(cell, cell.epi[1], 1)
+@test length(cell.epicon_ref[1]) == 2
+@test cell.epicon_incumbent_ref[1] !== nothing
 
+SQLP.sync_cuts!(cell)
+# Test that no redundant cut is added
+@test length(cell.epicon_ref[1]) == 2
 
+# Test lower bounds on epigraphs are added correctly when discounted
+# Epi2 has lb 100, and cut is discounted by 0.5. rhs was 1.0,
+# so the added cut should has rhs 100*0.5+1.0*0.5=50.5
+@test normalized_rhs(cell.epicon_ref[2][1]) == 50.5
+
+# constraint_object(cell.epicon_ref[1])
 # TODO: Test add_regularization, reset objective
 
 

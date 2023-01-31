@@ -63,13 +63,12 @@ Print an epigraph variable.
 """
 function Base.show(io::IO, epi::sdEpigraph)
     objw = epi.objective_weight
+    lb = epi.lower_bound
     sc_cnt = length(epi.scenario_list)
     sc_w = epi.total_scenario_weight
     cut_cnt = length(epi.cuts)
-    if epi.incumbent_cut !== nothing
-        cut_cnt = cut_cnt + 1
-    end
-    print(io, "sdEpigraph objw=$objw sc_cnt=$sc_cnt sc_w=$sc_w cut_cnt=$cut_cnt")
+    inc_cut = (epi.incumbent_cut !== nothing)
+    print(io, "sdEpigraph objw=$objw lb=$lb sc_cnt=$sc_cnt sc_w=$sc_w cut_cnt=$cut_cnt inc_cut=$inc_cut")
     return
 end
 

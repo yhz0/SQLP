@@ -16,9 +16,10 @@ mutable struct sdCell
     # Epigraph information
     epi::Vector{sdEpigraph}
 
-    # Epigraph variables and constraints in the master
+    # Epigraph variables and constraints in the master, and one specialized for incumbent_cut
     epivar_ref::Vector{VariableRef}
     epicon_ref::Vector{Vector{ConstraintRef}}
+    epicon_incumbent_ref::Vector{Union{ConstraintRef, Nothing}}
 
     # Regularization strength; might not be used
     reg::Float64
@@ -44,12 +45,13 @@ function sdCell(root_prob::spStageProblem)
 
     epivar_ref = []
     epicon_ref = []
+    epicon_incumbent_ref = []
     epi = []
     reg = 0.0
 
     xlen = length(x_ref)
     return sdCell(master, x_ref, root_stage_con, objf,
-        epi, epivar_ref, epicon_ref,
+        epi, epivar_ref, epicon_ref, epicon_incumbent_ref,
         reg, Set{Vector{Float64}}(), zeros(xlen), zeros(xlen))
 end
 
@@ -62,6 +64,11 @@ function Base.show(io::IO, cell::sdCell)
         count_variable_in_set_constraints = false)
     master_var_cnt = num_variables(cell.master)
     println(io, "Master con_cnt=$master_con_cnt var_cnt=$master_var_cnt")
+
+    inc_cut_cnt = length([con for con in cell.epicon_incumbent_ref if con !== nothing])
+    reg_cut_cnt = [length(cons) for cons in cell.epicon_ref]
+    println(io, "Master Cuts inc=$inc_cut_cnt reg=$reg_cut_cnt")
+
     epi_cnt = length(cell.epi)
     println(io, "Epigraph cnt=$epi_cnt")
     for epi in cell.epi
@@ -81,6 +88,7 @@ function bind_epigraph!(cell::sdCell, epi::sdEpigraph)
 
     push!(cell.epivar_ref, epiv)
     push!(cell.epicon_ref, [])
+    push!(cell.epicon_incumbent_ref, nothing)
 
     add_to_expression!(cell.objf, epi.objective_weight, epiv)
     set_objective_function(cell.master, cell.objf)
@@ -113,6 +121,11 @@ function remove_cuts!(cell::sdCell, epi_num::Int)
         delete(cell.master, con)
     end
     empty!(cell.epicon_ref[epi_num])
+
+    if cell.epicon_incumbent_ref[epi_num] !== nothing
+        delete(cell.master, cell.epicon_incumbent_ref[epi_num])
+        cell.epicon_incumbent_ref[epi_num] = nothing
+    end
     return
 end
 
@@ -130,17 +143,13 @@ end
 """
 Remove the epigraph cuts and then add the cuts associated with it.
 Added constraints are recorded in the cell structure.
-This will not add any cut if the total epigraph scenario weight is 0.
 """
 function sync_cuts!(cell::sdCell, epi::sdEpigraph, epi_num::Int)
-    if epi.total_scenario_weight == 0.0
-        return
-    end
 
     remove_cuts!(cell, epi_num)
     
     epi_ref = cell.epivar_ref[epi_num]
-    x_ref = cell.epivar_ref
+    x_ref = cell.x_ref
 
     for cut in epi.cuts
         # Normal cuts are discounted
@@ -156,7 +165,7 @@ function sync_cuts!(cell::sdCell, epi::sdEpigraph, epi_num::Int)
         discount = 1.0
         con = add_cut_to_master!(cell.master, epi.incumbent_cut, epi_ref, x_ref,
             discount, epi.lower_bound)
-        push!(cell.epicon_ref[epi_num], con)
+        cell.epicon_incumbent_ref[epi_num] = con
     end
 
     return
@@ -168,6 +177,6 @@ if exists.
 """
 function sync_cuts!(cell::sdCell)
     for (i, epi) in enumerate(cell.epi)
-        sync_epigraph_cuts!(cell, epi, i)
+        sync_cuts!(cell, epi, i)
     end
 end

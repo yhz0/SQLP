@@ -9,6 +9,7 @@ function standard_sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenar
         add_scenario!(cell.epi[i], scenario_list[i], 1.0)
     end
 
+    # TODO
     error("Unimplemented")
 end
 
@@ -16,5 +17,6 @@ end
 Check stopping criteria.
 """
 function stopping_criteria(cell::sdCell)::Bool
+    # TODO
     error("Unimplemented")
 end

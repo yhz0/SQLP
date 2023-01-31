@@ -9,7 +9,6 @@ struct sdCut
     
     # Records when this cut is generated to scale the cuts.
     weight_mark::Float64
-    incumbent::Bool
 end
 
 """
@@ -44,8 +43,8 @@ end
 
 """
 Create a new epigraph with the specified weight and subproblem template.
-Make sure the subprob is not reused so coefficients change does not
-overwrite each other in parallel version.
+Make sure the subprob is not reused in other epigraph variables
+so coefficients change does not overwrite each other in parallel version.
 """
 function sdEpigraph(
     prob::spStageProblem,
@@ -54,7 +53,7 @@ function sdEpigraph(
     
     new_prob = copy(prob)
     coef = extract_coefficients(new_prob)
-    
+    # TODO: change order of data structure member
     return sdEpigraph(new_prob, objective_weight, lower_bound,
         coef, [], 0.0, [], [], [], nothing)
 end
@@ -96,10 +95,39 @@ function add_scenario!(
 end
 
 """
+Add one cut to given master problem. Returns reference to the constraint added.
+"""
+function add_cut_to_master!(master::Model, cut::sdCut, 
+    epi_ref::VariableRef, x_ref::Vector{VariableRef},
+    discount::Float64, lower_bound::Float64)::ConstraintRef
+    
+    new_alpha = discount * cut.alpha + (1-discount) * lower_bound
+    new_beta = discount * cut.beta
+
+    if objective_sense(master) == MOI.MIN_SENSE
+        con = @constraint(master, epi_ref >= new_alpha + dot(new_beta, x_ref))
+    elseif objective_sense(master) == MOI.MAX_SENSE
+        con = @constraint(master, epi_ref <= new_alpha + dot(new_beta, x_ref))
+    else
+        error("Unknown master sense. Master should either be MIN or MAX problem.")
+    end
+        
+    return con
+end
+
+"""
 Build a cut at given last_stage_var x and partial dual_vertices.
 """
 function build_sasa_cut(epi::sdEpigraph, x::Vector{Float64},
     dual_vertices::Union{Set{Vector{Float64}}, Vector{Vector{Float64}}})::sdCut
-    
+    # TODO
+    error("Unimplemented")
+end
+
+"""
+Evaluate the epigraph variable at a certain x. Does not check feasibility.
+"""
+function evaluate_cut(epi::sdEpigraph, x::Vector{Float64})
+    # TODO
     error("Unimplemented")
 end

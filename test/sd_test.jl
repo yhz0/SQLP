@@ -145,8 +145,33 @@ SQLP.add_scenario!(cell.epi[2], my_scenario_3, 1.0)
 
 @test cell.epi[1].total_scenario_weight == 2.0
 
+# Test add_cut_to_master!
+# cut eta >= 1 + [2, 3, 4, 5] x with created at weight = 0.1
+cut = SQLP.sdCut(1.0, [2.0, 3.0, 4.0, 5.0], 0.1)
+con = SQLP.add_cut_to_master!(cell.master, cut, cell.epivar_ref[1], cell.x_ref,
+    1.0, 0.0)
+@test constraint_object(con).func == cell.epivar_ref[1] - [2, 3, 4, 5]' * cell.x_ref
+
+# Test remove_cuts!
+# Register the constraint as test case then remove it.
+push!(cell.epicon_ref[1], con)
+SQLP.remove_cuts!(cell, 1)
+@test !is_valid(cell.master, con)
+@test isempty(cell.epicon_ref[1])
+
+# Test sync_cuts!
+# Two demo cuts, and an incumbent cut
+cut1 = SQLP.sdCut(1.0, [2.0, 3.0, 4.0, 5.0], 1.0)
+cut2 = SQLP.sdCut(6.0, [7.0, 8.0, 9.0, 10.0], 2.0)
+inc_cut = SQLP.sdCut(11, [12.0, 13.0, 14.0, 15.0], 1.0)
+push!(cell.epi[1].cuts, cut1)
+push!(cell.epi[1].cuts, cut2)
+cell.epi[1].incumbent_cut = inc_cut
+
+# TODO: debug
+SQLP.sync_cuts!(cell, cell.epi[1], 1)
+
+
 # TODO: Test add_regularization, reset objective
 
-# TODO: Test add_epi_cuts, add_all_cuts
 
-# TODO: Test reset_cell

@@ -106,44 +106,56 @@ function add_regularization!(cell::sdCell, x0::Vector{Float64}, rho::Float64)
 end
 
 """
-Reset the cell to its setup state, removing the regularization terms
-and all epigraph cuts.
+Remove cuts associated with the specified epigraph in the cell structure.
 """
-function reset_cell!(cell::sdCell)
-    # Remove the constraints
-    for cons in cell.epicon_ref
-        for con in cons
-            delete(cell.master, con)
-        end
-        empty!(cons)
+function remove_cuts!(cell::sdCell, epi_num::Int)
+    for con in cell.epicon_ref[epi_num]
+        delete(cell.master, con)
     end
-
-    reset_objective!(cell)
-
+    empty!(cell.epicon_ref[epi_num])
     return
 end
 
 """
-Add the epigraph to a specified epigraph variable.
+Remove all epigraph cuts recorded in the cell structure.
+"""
+function remove_cuts!(cell::sdCell)
+    # Remove the constraints
+    for i in eachindex(cell.epicon_ref)
+        remove_cuts!(cell, i)
+    end
+    return
+end
+
+"""
+Remove the epigraph cuts and then add the cuts associated with it.
+Added constraints are recorded in the cell structure.
 This will not add any cut if the total epigraph scenario weight is 0.
 """
-function add_epi_cuts!(cell::sdCell, epi::sdEpigraph, epi_num::Int)
+function sync_cuts!(cell::sdCell, epi::sdEpigraph, epi_num::Int)
     if epi.total_scenario_weight == 0.0
         return
     end
+
+    remove_cuts!(cell, epi_num)
     
     epi_ref = cell.epivar_ref[epi_num]
     x_ref = cell.epivar_ref
 
     for cut in epi.cuts
+        # Normal cuts are discounted
         discount = cut.weight_mark / epi.total_scenario_weight
-        
-        # Calculate the coefficients
-        new_alpha = discount*cut.alpha + (1-discount)*epi.lower_bound
-        new_beta = discount*beta
-        con = @constraint(cell.master, epi_ref >= new_alpha + dot(new_beta, x_ref))
-        
-        # Record the reference to that constraint
+        con = add_cut_to_master!(cell.master, cut, epi_ref, x_ref,
+            discount, epi.lower_bound)
+
+        push!(cell.epicon_ref[epi_num], con)
+    end
+
+    # Add the incumbent if exists
+    if epi.incumbent_cut !== nothing
+        discount = 1.0
+        con = add_cut_to_master!(cell.master, epi.incumbent_cut, epi_ref, x_ref,
+            discount, epi.lower_bound)
         push!(cell.epicon_ref[epi_num], con)
     end
 
@@ -151,10 +163,11 @@ function add_epi_cuts!(cell::sdCell, epi::sdEpigraph, epi_num::Int)
 end
 
 """
-Reset the cell and add all epigragh cuts in a cell.
+Remove the cuts then add all epigragh cuts to a cell, including the incumbent
+if exists.
 """
-function add_all_cuts!(cell::sdCell)
-    for (i, epi) in cell.epi
-        add_epi_cuts!(cell, epi, i)
+function sync_cuts!(cell::sdCell)
+    for (i, epi) in enumerate(cell.epi)
+        sync_epigraph_cuts!(cell, epi, i)
     end
 end

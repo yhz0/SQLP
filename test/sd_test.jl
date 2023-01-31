@@ -147,6 +147,7 @@ SQLP.add_scenario!(cell.epi[2], my_scenario_3, 1.0)
 
 @test cell.epi[1].total_scenario_weight == 2.0
 
+# === Cuts related
 # Test add_cut_to_master!
 # cut eta >= 1 + [2, 3, 4, 5] x with created at weight = 0.1
 cut = SQLP.sdCut(1.0, [2.0, 3.0, 4.0, 5.0], 0.1)
@@ -183,8 +184,5 @@ SQLP.sync_cuts!(cell)
 # Epi2 has lb 100, and cut is discounted by 0.5. rhs was 1.0,
 # so the added cut should has rhs 100*0.5+1.0*0.5=50.5
 @test normalized_rhs(cell.epicon_ref[2][1]) == 50.5
-
-# constraint_object(cell.epicon_ref[1])
-# TODO: Test add_regularization, reset objective
 
 

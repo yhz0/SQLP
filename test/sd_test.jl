@@ -191,4 +191,32 @@ SQLP.sync_cuts!(cell)
 @test SQLP.evaluate_epigraph(cell.epi[2], [10.0, 10.0, 10.0, 10.0]) == 141/2 + 100/2
 @test SQLP.evaluate_epigraph(cell.epi[2], [-1.0, -1, -1, -1]) == 100.0
 
-# TODO: need test for build_sasa_cut
+# Test for build_sasa_cut
+
+x = [2., 3., 4., 5.]
+dv = [my_dual, my_dual_2]
+# Change some weight to see if it works correctly
+epi2 = SQLP.sdEpigraph(sp2, 0.5, 100.0)
+SQLP.add_scenario!(epi2, my_scenario_2, 1.5) # RHS = 3.0
+SQLP.add_scenario!(epi2, my_scenario_3, 0.5) # RHS = 7.0
+
+# Manual calculation:
+# Epi2 scenario #1 (3.0): dv1=168 dv2=169 choose dv[2]
+# SQLP.eval_dual(epi[2].subproblem_coef, epi[2].scenario_delta[1], x, dv[1])
+# SQLP.eval_dual(epi[2].subproblem_coef, epi[2].scenario_delta[1], x, dv[2])
+# Epi2 scenario #2 (7.0): dv1=344 dv2=331 choose dv[1]
+# SQLP.eval_dual(epi[2].subproblem_coef, epi[2].scenario_delta[2], x, dv[1])
+# SQLP.eval_dual(epi[2].subproblem_coef, epi[2].scenario_delta[2], x, dv[2])
+
+r1 = epi2.subproblem_coef.rhs + epi2.scenario_delta[1].delta_rhs
+T1 = epi2.subproblem_coef.transfer + epi2.scenario_delta[1].delta_transfer
+r2 = epi2.subproblem_coef.rhs + epi2.scenario_delta[2].delta_rhs
+T2 = epi2.subproblem_coef.transfer + epi2.scenario_delta[2].delta_transfer
+
+expected_alpha = 1.5/2.0 * dv[2]' * r1 + 0.5/2.0 * dv[1]' * r2
+expected_beta = 1.5/2.0 * T1' * dv[2] + 0.5/2.0 * T2' * dv[1]
+
+cut = SQLP.build_sasa_cut(epi2, x, dv)
+@test cut.alpha == expected_alpha
+@test cut.beta == expected_beta
+@test cut.weight_mark == 2.0

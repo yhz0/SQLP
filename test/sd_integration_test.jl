@@ -1,6 +1,9 @@
-using SQLP, MathOptInterface, JuMP, CPLEX, Test
+using SQLP, MathOptInterface, JuMP, CPLEX, Test, Printf
+
+Base.show(io::IO, f::Float64) = @printf(io, "%.4f", f)
 
 optimizer = CPLEX.Optimizer
+# Load files
 cor = SQLP.read_cor(joinpath("spInput", "lands", "lands.cor"))
 tim = SQLP.read_tim(joinpath("spInput", "lands", "lands.tim"))
 sto = SQLP.read_sto(joinpath("spInput", "lands", "lands.sto"))
@@ -8,6 +11,7 @@ sto = SQLP.read_sto(joinpath("spInput", "lands", "lands.sto"))
 sp1 = SQLP.get_smps_stage_template(cor, tim, 1)
 sp2 = SQLP.get_smps_stage_template(cor, tim, 2)
 
+# Set up cell
 cell = SQLP.sdCell(sp1)
 epi1 = SQLP.sdEpigraph(sp2, 0.5, 0.0)
 epi2 = SQLP.sdEpigraph(sp2, 0.5, 0.0)
@@ -15,8 +19,12 @@ SQLP.bind_epigraph!(cell, epi1)
 SQLP.bind_epigraph!(cell, epi2)
 
 set_optimizer(cell.master, optimizer)
-set_optimizer(epi1.prob.model, optimizer)
-set_optimizer(epi2.prob.model, optimizer)
+set_silent(cell.master)
+for epi in cell.epi
+    set_optimizer(epi.prob.model, optimizer)
+    set_silent(epi.prob.model)
+end
+
 
 # A starting solution
 x0 = [3., 3, 3, 3]
@@ -24,10 +32,19 @@ x0 = [3., 3, 3, 3]
 cell.x_incumbent .= x0
 cell.x_candidate .= x0
 
-# TODO debug this procedure
-SQLP.standard_sd_iteration!(cell, [rand(sto), rand(sto)])
+# Populate with initial samples
+for i = 1:1000
+    SQLP.add_scenario!(cell.epi[1], rand(sto))
+    SQLP.add_scenario!(cell.epi[2], rand(sto))
+end
 
-epi1.cuts
 
-cell
+x_cand = Float64[]
 
+for i = 1:10
+    x, repl = SQLP.sd_iteration!(cell, [rand(sto), rand(sto)]; rho=10.0)
+    if repl
+        println("iter $i Replaced incumbent $x ")
+    end
+    global x_cand = x
+end

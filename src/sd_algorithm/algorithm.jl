@@ -1,4 +1,4 @@
-const INCUMBENT_SELECTION_Q = 0.8
+const INCUMBENT_SELECTION_Q = 0.2
 """
 Returns current incumbent gap versus last incumbent gap.
 """
@@ -7,6 +7,7 @@ function incumbent_selection(
     x_candidate::Vector{Float64}, x_incumbent::Vector{Float64};
     sense::MOI.OptimizationSense = MIN_SENSE)::Bool where
     {T1, T2 <: Union{sdEpigraph, sdEpigraphInfo}}
+    # FIXME: cost function 
 
     #TODO: implement MAX_SENSE
     if sense == MAX_SENSE
@@ -15,13 +16,14 @@ function incumbent_selection(
 
     a = evaluate_multi_epigraph(f_current, x_candidate; sense=sense)
     b = evaluate_multi_epigraph(f_current, x_incumbent; sense=sense)
-    current_gap = a - b
+    current = a - b
 
     c = evaluate_multi_epigraph(f_last, x_candidate; sense=sense)
     d = evaluate_multi_epigraph(f_last, x_incumbent; sense=sense)
     last_gap = c - d
 
-    return current_gap < INCUMBENT_SELECTION_Q * last_gap
+    println("current=$current_gap last_gap=$last_gap")
+    return current < INCUMBENT_SELECTION_Q * last_gap
 end
 
 const DUAL_TOLERANCE = 0.001
@@ -46,7 +48,7 @@ by argmax procedure, at the candidate solution. Store it in the epigraph.
 Solve master to get new candidate solution.
 8. Do incumbent selection. Replace incumbent if needed.
 """
-function standard_sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenario})
+function sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenario}; rho::Float64 = 0.01)
     # Make sure the length of the epigraph variable is the same.
     @assert(length(scenario_list) == length(cell.epivar_ref))
 
@@ -69,13 +71,15 @@ function standard_sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenar
     # Remove cuts with non-zero multiplier
     if termination_status(cell.master) == OPTIMAL
         for i in eachindex(cell.epicon_ref)
+            delete_index = Int[]
             for j in eachindex(cell.epicon_ref[i])
                 con = cell.epicon_ref[i][j]
-                cut = cell.epi[i].cuts[j]
                 if abs(dual(con)) >= DUAL_TOLERANCE
-                    deleteat!(cell.epi[i].cuts, j)
+                    # Mark j for deletion
+                    push!(delete_index, j)
                 end
             end
+            deleteat!(cell.epi[i].cuts, delete_index)
         end
     else 
         @warn("Master Problem is not solved. Skipping removing cuts.")
@@ -89,8 +93,6 @@ function standard_sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenar
     end
 
     # Solve master
-    # TODO: adaptive
-    rho = 0.001
     add_regularization!(cell, cell.x_incumbent, rho)
     sync_cuts!(cell)
     optimize!(cell.master)
@@ -98,10 +100,11 @@ function standard_sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenar
     cell.x_candidate .= value.(cell.x_ref)
 
     # Incumbent selection
-    if incumbent_selection(epi_info_last, cell.epi,
+    replace_incumbent = incumbent_selection(epi_info_last, cell.epi,
         cell.x_candidate, cell.x_incumbent)
+    if replace_incumbent
         cell.x_incumbent .= cell.x_candidate
     end
 
-    return cell.x_candidate
+    return cell.x_candidate, replace_incumbent
 end

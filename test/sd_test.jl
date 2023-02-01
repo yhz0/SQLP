@@ -137,6 +137,7 @@ SQLP.bind_epigraph!(cell, epi2)
 
 @test cell.objf == 
     QuadExpr([10, 7, 16, 6]' * cell.x_ref + [0.5, 0.5]' * cell.epivar_ref)
+@test cell.objf_original == QuadExpr([10, 7, 16, 6]' * cell.x_ref)
 
 # Add scenario to epigraph
 SQLP.add_scenario!(cell.epi[1], my_scenario, 1.0)

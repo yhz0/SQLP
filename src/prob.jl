@@ -18,6 +18,7 @@ function check_first_stage_feasible(sp1::spStageProblem, x::Vector{Float64}; opt
     fix.(refmap[sp1.current_stage_vars], x, force=true)
     set_objective_sense(model, FEASIBILITY_SENSE)
     set_optimizer(model, optimizer)
+    set_silent(model)
     optimize!(model)
     if termination_status(model) == OPTIMAL
         return true

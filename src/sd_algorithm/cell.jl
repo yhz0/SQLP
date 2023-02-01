@@ -12,6 +12,7 @@ mutable struct sdCell
     # Objective function expression in the master, incl epigraph terms,
     # but without the prox terms
     objf::QuadExpr
+    objf_original::QuadExpr
 
     # Epigraph information
     epi::Vector{sdEpigraph}
@@ -56,7 +57,7 @@ function sdCell(root_prob::spStageProblem)
     reg = 0.0
 
     xlen = length(x_ref)
-    return sdCell(master, x_ref, root_stage_con, objf,
+    return sdCell(master, x_ref, root_stage_con, objf, copy(objf),
         epi, epivar_ref, epicon_ref, epicon_incumbent_ref,
         reg, Set{Vector{Float64}}(), zeros(xlen), zeros(xlen))
 end
@@ -69,7 +70,8 @@ function Base.show(io::IO, cell::sdCell)
     master_con_cnt = num_constraints(cell.master;
         count_variable_in_set_constraints = false)
     master_var_cnt = num_variables(cell.master)
-    println(io, "Master con_cnt=$master_con_cnt var_cnt=$master_var_cnt")
+    dual_cnt = length(cell.dual_vertices)
+    println(io, "Master con_cnt=$master_con_cnt var_cnt=$master_var_cnt dual_cnt=$dual_cnt")
 
     inc_cut_cnt = length([con for con in cell.epicon_incumbent_ref if con !== nothing])
     reg_cut_cnt = [length(cons) for cons in cell.epicon_ref]

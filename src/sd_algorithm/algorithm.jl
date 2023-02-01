@@ -4,26 +4,29 @@ Returns current incumbent gap versus last incumbent gap.
 """
 function incumbent_selection(
     f_last::Vector{T1}, f_current::Vector{T2},
-    x_candidate::Vector{Float64}, x_incumbent::Vector{Float64};
+    x_candidate::Vector{Float64}, x_incumbent::Vector{Float64},
+    x_ref::Vector{VariableRef}, common_expr::QuadExpr;
     sense::MOI.OptimizationSense = MIN_SENSE)::Bool where
     {T1, T2 <: Union{sdEpigraph, sdEpigraphInfo}}
-    # FIXME: cost function 
 
     #TODO: implement MAX_SENSE
     if sense == MAX_SENSE
         error("Unimplemented")
     end
 
-    a = evaluate_multi_epigraph(f_current, x_candidate; sense=sense)
-    b = evaluate_multi_epigraph(f_current, x_incumbent; sense=sense)
-    current = a - b
+    f_cand = evaluate_expr(common_expr, x_ref, x_candidate)
+    f_inc = evaluate_expr(common_expr, x_ref, x_incumbent)
 
-    c = evaluate_multi_epigraph(f_last, x_candidate; sense=sense)
-    d = evaluate_multi_epigraph(f_last, x_incumbent; sense=sense)
-    last_gap = c - d
+    a = evaluate_multi_epigraph(f_current, x_candidate; sense=sense) + f_cand
+    b = evaluate_multi_epigraph(f_current, x_incumbent; sense=sense) + f_inc
+    cur = a
 
-    println("current=$current_gap last_gap=$last_gap")
-    return current < INCUMBENT_SELECTION_Q * last_gap
+    c = evaluate_multi_epigraph(f_last, x_candidate; sense=sense) + f_cand
+    d = evaluate_multi_epigraph(f_last, x_incumbent; sense=sense) + f_inc
+    req = b + INCUMBENT_SELECTION_Q * (c - d)
+
+    @info("Incumbent Selection: cur=$cur req=$req $(cur < req)")
+    return cur < req
 end
 
 const DUAL_TOLERANCE = 0.001
@@ -101,7 +104,7 @@ function sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenario}; rho:
 
     # Incumbent selection
     replace_incumbent = incumbent_selection(epi_info_last, cell.epi,
-        cell.x_candidate, cell.x_incumbent)
+        cell.x_candidate, cell.x_incumbent, cell.x_ref, cell.objf_original)
     if replace_incumbent
         cell.x_incumbent .= cell.x_candidate
     end

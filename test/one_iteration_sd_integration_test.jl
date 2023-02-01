@@ -1,6 +1,10 @@
-using SQLP, MathOptInterface, JuMP, CPLEX, Test
+using SQLP, MathOptInterface, JuMP, CPLEX, Test, Printf
 
 optimizer = CPLEX.Optimizer
+
+# Shorten to 4 digits
+Base.show(io::IO, f::Float64) = @printf(io, "%.4f", f)
+
 # Load files
 cor = SQLP.read_cor(joinpath("spInput", "lands", "lands.cor"))
 tim = SQLP.read_tim(joinpath("spInput", "lands", "lands.tim"))
@@ -92,9 +96,9 @@ begin
     @show value.(cell.x_ref) - cell.x_incumbent
     cell.x_candidate .= value.(cell.x_ref)
 
-    # # Incumbent selection
+    # Incumbent selection
     replace_incumbent = SQLP.incumbent_selection(epi_info_last, cell.epi,
-        cell.x_candidate, cell.x_incumbent)
+        cell.x_candidate, cell.x_incumbent, cell.x_ref, cell.objf_original)
     if replace_incumbent
         cell.x_incumbent .= cell.x_candidate
     end

@@ -140,9 +140,12 @@ Find the dual extreme point in the dual_set that yields the highest cut at given
 Returns a tuple: (arg, val, alpha, beta)
 arg: the dual vertice that gives the highest cut.
 val: the value of that cut at x
+Sense is set as the same as subproblem. It should either be MIN_SENSE or MAX_SENSE.
+If MIN_SENSE(default), we do epigraph, so taking argmax. If it is MAX_SENSE, we do the other way.
 """
 function argmax_procedure(coef::sdSubprobCoefficients, delta_set::Vector{sdDeltaCoefficients},
-    x::Vector{Float64}, dual_vertices::sdDualSet)::Tuple{Vector{Float64}, Vector{Ref{Vector{Float64}}}}
+    x::Vector{Float64}, dual_vertices::sdDualSet;
+    sense::MOI.OptimizationSense=MIN_SENSE)::Tuple{Vector{Float64}, Vector{Ref{Vector{Float64}}}}
     max_arg = Ref{Vector{Float64}}[]
     max_val = Float64[]
 
@@ -155,9 +158,10 @@ function argmax_procedure(coef::sdSubprobCoefficients, delta_set::Vector{sdDelta
 
         for p in dual_vertices
             current_val = dot(p, base_vector) + dot(p, delta_vector) 
-            # TODO: look at sense. If it is max sense then take min instead!
-            # Also be careful what it is doing when the dual comes from MAX!!
-            if current_val > current_max_val
+            if sense == MIN_SENSE && current_val > current_max_val
+                current_max_val = current_val
+                current_arg = p
+            elseif sense == MAX_SENSE && current_val < current_max_val
                 current_max_val = current_val
                 current_arg = p
             end

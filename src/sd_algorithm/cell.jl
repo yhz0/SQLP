@@ -36,6 +36,12 @@ end
 Copy master problem and master constraints into the cell.
 """
 function sdCell(root_prob::spStageProblem)
+    if objective_sense(root_prob.model) == MAX_SENSE
+        @warn("Created cell with MAX_SENSE. This is not tested.")
+    elseif objective_sense(root_prob.model) != MIN_SENSE
+        error("Unsupported objective sense in root stage problem. Use MIN_SENSE.")
+    end
+    
     # Initialize master problem by copying
     new_root_prob::spStageProblem = copy(root_prob)
     master = new_root_prob.model

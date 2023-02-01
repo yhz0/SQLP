@@ -56,7 +56,6 @@ function sdEpigraph(
     
     new_prob = copy(prob)
     coef = extract_coefficients(new_prob)
-    # TODO: change order of data structure member
     return sdEpigraph(new_prob, coef, objective_weight, lower_bound,
         [], 0.0, [], [], [], nothing)
 end
@@ -126,7 +125,7 @@ to weight_i and sums to 1.
 function build_sasa_cut(epi::sdEpigraph, x::Vector{Float64},
     dual_vertices::sdDualSet)::sdCut
     max_val, max_arg = argmax_procedure(epi.subproblem_coef, epi.scenario_delta,
-        x, dual_vertices)
+        x, dual_vertices; sense=objective_sense(epi.prob.model))
 
     alpha::Float64 = 0.0
     beta::Vector{Float64} = zeros(length(x))

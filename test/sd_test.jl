@@ -186,10 +186,22 @@ SQLP.sync_cuts!(cell)
 @test normalized_rhs(cell.epicon_ref[2][1]) == 50.5
 
 # Test evaluate_epigraph
-@test SQLP.evaluate_epigraph(cell.epi[1], [10.0, 10.0, 10.0, 10.0]) == 551.0
-# test if the discount is applied correctly and the lower bound is applied
-@test SQLP.evaluate_epigraph(cell.epi[2], [10.0, 10.0, 10.0, 10.0]) == 141/2 + 100/2
-@test SQLP.evaluate_epigraph(cell.epi[2], [-1.0, -1, -1, -1]) == 100.0
+# TODO: rewrite tests
+@test SQLP.evaluate_epigraph(cell.epi[1], [10.0, 10.0, 10.0, 10.0]) == 551.0*0.5
+# # test if the discount is applied correctly and the lower bound is applied
+@test SQLP.evaluate_epigraph(cell.epi[2], [10.0, 10.0, 10.0, 10.0]) == (141/2 + 100/2)*0.5
+@test SQLP.evaluate_epigraph(cell.epi[2], [-1.0, -1, -1, -1]) == 100.0*0.5
+
+# Test extracting sdEpigraphInfo from sdEpigraph
+# Make sure that mutating/deleting sdEpigraph does not invalidate sdEpigraphInfo
+
+epi3 = SQLP.sdEpigraph(sp2, 1.0, 1.0)
+push!(epi3.cuts, cut1)
+push!(epi3.cuts, cut2)
+epi3.incumbent_cut = inc_cut
+epi_info = SQLP.sdEpigraphInfo(epi3)
+empty!(epi3.cuts)
+@test !isempty(epi_info.cuts)
 
 # Test for build_sasa_cut
 

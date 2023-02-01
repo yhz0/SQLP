@@ -146,17 +146,42 @@ function build_sasa_cut(epi::sdEpigraph, x::Vector{Float64},
 end
 
 """
-Evaluate the pointwise min(or max) at a certain x, given discount, and lower bound.
+Structure that stores all the information to recover the
+convex piecewise function approximation.
 """
-function evaluate_epigraph(epi::sdEpigraph, x::Vector{Float64})
-    sense = objective_sense(epi.prob.model)
-    @assert(sense == MIN_SENSE || sense == MAX_SENSE)
-    
-    best_val = epi.lower_bound
+struct sdEpigraphInfo
+    objective_weight::Float64
+    cuts::Vector{sdCut}
+    incumbent_cut::Union{sdCut, Nothing}
+    total_scenario_weight::Float64
+    lower_bound::Float64
+end
 
-    for cut::sdCut in epi.cuts
-        discount = cut.weight_mark / epi.total_scenario_weight
-        val = discount * (cut.alpha + dot(cut.beta, x)) + (1-discount) * epi.lower_bound
+"""
+Extract only the necessary info from the epigraph variables.
+"""
+function sdEpigraphInfo(epi::sdEpigraph)
+    return sdEpigraphInfo(
+        epi.objective_weight,
+        copy(epi.cuts),
+        epi.incumbent_cut,
+        epi.total_scenario_weight,
+        epi.lower_bound
+    )
+end
+
+"""
+Evaluate the pointwise max(or min) at a certain x, and lower bound.
+This does not apply the weight of the epigraph.
+"""
+function evaluate_epigraph(cuts::Vector{sdCut}, incumbent_cut::Union{sdCut, Nothing},
+    x::Vector{Float64}, total_scenario_weight::Float64, lower_bound::Float64;
+    sense::MOI.OptimizationSense=MIN_SENSE)
+    best_val = lower_bound
+
+    for cut::sdCut in cuts
+        discount = cut.weight_mark / total_scenario_weight
+        val = discount * (cut.alpha + dot(cut.beta, x)) + (1-discount) * lower_bound
         if sense == MIN_SENSE && val > best_val
             best_val = val
         elseif sense == MAX_SENSE && val < best_val
@@ -165,8 +190,8 @@ function evaluate_epigraph(epi::sdEpigraph, x::Vector{Float64})
     end
 
     # Eval at Incumbent cut if needed
-    if epi.incumbent_cut !== nothing
-        val = epi.incumbent_cut.alpha + dot(epi.incumbent_cut.beta, x)
+    if incumbent_cut !== nothing
+        val = incumbent_cut.alpha + dot(incumbent_cut.beta, x)
         if sense == MIN_SENSE && val > best_val
             best_val = val
         elseif sense == MAX_SENSE && val < best_val
@@ -175,4 +200,21 @@ function evaluate_epigraph(epi::sdEpigraph, x::Vector{Float64})
     end
 
     return best_val
+end
+
+"""
+Evaluate the epigraph given the info. This includes the weight of the epigraph.
+"""
+function evaluate_epigraph(epi_info::sdEpigraphInfo, x::Vector{Float64};
+    sense::MOI.OptimizationSense)
+    return epi_info.objective_weight * evaluate_epigraph(epi_info.cuts, epi_info.incumbent_cut,
+    x, epi_info.total_scenario_weight, epi_info.lower_bound; sense=sense)
+end
+
+"""
+Shortcut for evaluating the epigraph at the info level.
+"""
+function evaluate_epigraph(epi::sdEpigraph, x::Vector{Float64};
+    sense::MOI.OptimizationSense=MIN_SENSE)
+    return evaluate_epigraph(sdEpigraphInfo(epi), x; sense=sense)
 end

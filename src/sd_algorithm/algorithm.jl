@@ -12,11 +12,3 @@ function standard_sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenar
     # TODO
     error("Unimplemented")
 end
-
-"""
-Check stopping criteria.
-"""
-function stopping_criteria(cell::sdCell)::Bool
-    # TODO
-    error("Unimplemented")
-end

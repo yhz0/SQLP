@@ -60,3 +60,23 @@ function solve_problem!(sp::spStageProblem, last_stage_val::Vector{Float64}, sce
     obj = objective_value(sp.model)
     return obj, y_opt, dual_opt
 end
+
+"""
+Evaluate a 2SP by IID sampling at a point, using N sample points.
+"""
+function evaluate(sp1::spStageProblem, sp2::spStageProblem, sto::spStoType, 
+    x::Vector{Float64}; N::Int=10000)
+    f = objective_function(sp1.model)
+    s1_cost = evaluate_expr(f, sp1.current_stage_vars, x)
+    s2_cost = 0.0
+
+    # Suppress output to avoid flooding the screen.
+    set_silent(sp2.model)
+
+    for _ = 1:N
+        scenario = rand(sto)
+        obj, _, _ = solve_problem!(sp2, x, scenario)
+        s2_cost += 1/N*obj
+    end
+    return s1_cost+s2_cost
+end

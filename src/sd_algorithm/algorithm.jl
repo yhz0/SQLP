@@ -1,12 +1,15 @@
 const INCUMBENT_SELECTION_Q = 0.2
 """
-Returns current incumbent gap versus last incumbent gap.
+Performs incumbent selection step.
+Returns a tuple (lb_est, replace)
+lb_est: lower bound estimation at current candidate
+replace:
 """
 function incumbent_selection(
     f_last::Vector{T1}, f_current::Vector{T2},
     x_candidate::Vector{Float64}, x_incumbent::Vector{Float64},
     x_ref::Vector{VariableRef}, common_expr::QuadExpr;
-    sense::MOI.OptimizationSense = MIN_SENSE)::Bool where
+    sense::MOI.OptimizationSense = MIN_SENSE)::Tuple{Float64, Bool} where
     {T1, T2 <: Union{sdEpigraph, sdEpigraphInfo}}
 
     #TODO: implement MAX_SENSE
@@ -17,16 +20,16 @@ function incumbent_selection(
     f_cand = evaluate_expr(common_expr, x_ref, x_candidate)
     f_inc = evaluate_expr(common_expr, x_ref, x_incumbent)
 
-    a = evaluate_multi_epigraph(f_current, x_candidate; sense=sense) + f_cand
+    lb_est = evaluate_multi_epigraph(f_current, x_candidate; sense=sense) + f_cand
     b = evaluate_multi_epigraph(f_current, x_incumbent; sense=sense) + f_inc
-    cur = a
+    cur = lb_est
 
     c = evaluate_multi_epigraph(f_last, x_candidate; sense=sense) + f_cand
     d = evaluate_multi_epigraph(f_last, x_incumbent; sense=sense) + f_inc
     req = b + INCUMBENT_SELECTION_Q * (c - d)
 
-    @info("Incumbent Selection: cur=$cur req=$req $(cur < req)")
-    return cur < req
+    # @info("Incumbent Selection: cur=$cur req=$req $(cur < req)")
+    return lb_est, cur < req
 end
 
 const DUAL_TOLERANCE = 0.001
@@ -85,7 +88,7 @@ function sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenario}; rho:
             deleteat!(cell.epi[i].cuts, delete_index)
         end
     else 
-        @warn("Master Problem is not solved. Skipping removing cuts.")
+        # @warn("Master Problem is not solved. Skipping removing cuts.")
     end
 
     # Generate cuts
@@ -103,11 +106,11 @@ function sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenario}; rho:
     cell.x_candidate .= value.(cell.x_ref)
 
     # Incumbent selection
-    replace_incumbent = incumbent_selection(epi_info_last, cell.epi,
+    lb_est, replace_incumbent = incumbent_selection(epi_info_last, cell.epi,
         cell.x_candidate, cell.x_incumbent, cell.x_ref, cell.objf_original)
     if replace_incumbent
         cell.x_incumbent .= cell.x_candidate
     end
 
-    return cell.x_candidate, replace_incumbent
+    return cell.x_candidate, lb_est
 end

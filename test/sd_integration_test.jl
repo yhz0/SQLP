@@ -11,12 +11,14 @@ sto = SQLP.read_sto(joinpath("spInput", "lands", "lands.sto"))
 sp1 = SQLP.get_smps_stage_template(cor, tim, 1)
 sp2 = SQLP.get_smps_stage_template(cor, tim, 2)
 
+set_optimizer(sp2.model, optimizer)
+
 # Set up cell
 cell = SQLP.sdCell(sp1)
 epi1 = SQLP.sdEpigraph(sp2, 0.5, 0.0)
-epi2 = SQLP.sdEpigraph(sp2, 0.5, 0.0)
+# epi2 = SQLP.sdEpigraph(sp2, 0.5, 0.0)
 SQLP.bind_epigraph!(cell, epi1)
-SQLP.bind_epigraph!(cell, epi2)
+# SQLP.bind_epigraph!(cell, epi2)
 
 set_optimizer(cell.master, optimizer)
 set_silent(cell.master)
@@ -35,16 +37,16 @@ cell.x_candidate .= x0
 # Populate with initial samples
 for i = 1:1000
     SQLP.add_scenario!(cell.epi[1], rand(sto))
-    SQLP.add_scenario!(cell.epi[2], rand(sto))
+    # SQLP.add_scenario!(cell.epi[2], rand(sto))
 end
 
 
-x_cand = Float64[]
+hist = Float64[]
+for i = 1:100
+    x, lb = SQLP.sd_iteration!(cell, [rand(sto)]; rho=10.0)
+    ub = SQLP.evaluate(sp1, sp2, sto, cell.x_incumbent)
+    println("Iter $i \t lb=$lb ub=$ub")
 
-for i = 1:10
-    x, repl = SQLP.sd_iteration!(cell, [rand(sto), rand(sto)]; rho=10.0)
-    if repl
-        println("iter $i Replaced incumbent $x ")
-    end
-    global x_cand = x
 end
+
+print(hist)

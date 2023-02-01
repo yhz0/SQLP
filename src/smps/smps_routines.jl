@@ -52,7 +52,8 @@ function solve_problem!(sp::spStageProblem, last_stage_val::Vector{Float64}, sce
     fix.(sp.last_stage_vars, last_stage_val, force=true)
     optimize!(sp.model)
     if termination_status(sp.model) != OPTIMAL
-        @warn "Failed to solve subproblem."
+        print(sp.model)
+        @error "Failed to solve subproblem."
     end
     dual_opt = dual.(sp.stage_constraints)
     y_opt = value.(sp.current_stage_vars)

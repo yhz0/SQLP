@@ -131,7 +131,7 @@ function build_sasa_cut(epi::sdEpigraph, x::Vector{Float64},
     beta::Vector{Float64} = zeros(length(x))
     val::Float64 = 0.0
 
-    for i in eachindex(dual_vertices)
+    for i in eachindex(max_arg)
         # dual vertex chosen
         dual = max_arg[i]
         # weight

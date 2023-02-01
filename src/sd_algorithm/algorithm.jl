@@ -4,7 +4,7 @@ Returns current incumbent gap versus last incumbent gap.
 """
 function incumbent_selection(
     f_last::Vector{T1}, f_current::Vector{T2},
-    x_candidate::Float64, x_incumbent::Float64;
+    x_candidate::Vector{Float64}, x_incumbent::Vector{Float64};
     sense::MOI.OptimizationSense = MIN_SENSE)::Bool where
     {T1, T2 <: Union{sdEpigraph, sdEpigraphInfo}}
 
@@ -85,11 +85,12 @@ function standard_sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenar
     for epi in cell.epi
         new_cut = build_sasa_cut(epi, cell.x_candidate, cell.dual_vertices)
         push!(epi.cuts, new_cut)
-        epi.incumbent_cut = build_sasa_cut(epi, call.x_incumbent, cell.dual_vertices)
+        epi.incumbent_cut = build_sasa_cut(epi, cell.x_incumbent, cell.dual_vertices)
     end
 
     # Solve master
-    rho = 1.0
+    # TODO: adaptive
+    rho = 0.001
     add_regularization!(cell, cell.x_incumbent, rho)
     sync_cuts!(cell)
     optimize!(cell.master)

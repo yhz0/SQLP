@@ -218,3 +218,11 @@ function evaluate_epigraph(epi::sdEpigraph, x::Vector{Float64};
     sense::MOI.OptimizationSense=MIN_SENSE)
     return evaluate_epigraph(sdEpigraphInfo(epi), x; sense=sense)
 end
+
+"""
+Evaluate weighted sum of epigraph at given x.
+"""
+function evaluate_multi_epigraph(v_epi::Vector{T}, x::Vector{Float64};
+    sense::MOI.OptimizationSense=MIN_SENSE) where T <: Union{sdEpigraph, sdEpigraphInfo}
+    return sum(evaluate_epigraph(epi, x; sense=sense) for epi in v_epi)
+end

@@ -227,7 +227,7 @@ r2 = epi2.subproblem_coef.rhs + epi2.scenario_delta[2].delta_rhs
 T2 = epi2.subproblem_coef.transfer + epi2.scenario_delta[2].delta_transfer
 
 expected_alpha = 1.5/2.0 * dv[2]' * r1 + 0.5/2.0 * dv[1]' * r2
-expected_beta = 1.5/2.0 * T1' * dv[2] + 0.5/2.0 * T2' * dv[1]
+expected_beta = 1.5/2.0 * -T1' * dv[2] + 0.5/2.0 * -T2' * dv[1]
 
 cut = SQLP.build_sasa_cut(epi2, x, dv)
 @test cut.alpha == expected_alpha

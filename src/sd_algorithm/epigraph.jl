@@ -138,7 +138,7 @@ function build_sasa_cut(epi::sdEpigraph, x::Vector{Float64},
         p = epi.scenario_weight[i] / epi.total_scenario_weight
 
         alpha += p * dot(dual[], epi.subproblem_coef.rhs + epi.scenario_delta[i].delta_rhs)
-        beta += p * (epi.subproblem_coef.transfer + epi.scenario_delta[i].delta_transfer)' * dual[]
+        beta += -p * (epi.subproblem_coef.transfer + epi.scenario_delta[i].delta_transfer)' * dual[]
         val += p * max_val[i]
     end
 

@@ -42,7 +42,10 @@ function read_tim(tim_path::String)::spTimType
         token = split(line)
         if line[1] == ' '
             @assert section == "PERIODS"
-            @assert length(token) == 3
+            if length(token) != 3
+                @warn("Parser: more token than expected in tim file.")
+                @warn line
+            end
             col_name = token[1]
             row_name = token[2]
             period_name = token[3]

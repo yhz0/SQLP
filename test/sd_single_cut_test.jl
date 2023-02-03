@@ -15,10 +15,8 @@ set_optimizer(sp2.model, optimizer)
 
 # Set up cell
 cell = SQLP.sdCell(sp1)
-epi1 = SQLP.sdEpigraph(sp2, 0.5, 0.0)
-# epi2 = SQLP.sdEpigraph(sp2, 0.5, 0.0)
+epi1 = SQLP.sdEpigraph(sp2, 1.0, 0.0)
 SQLP.bind_epigraph!(cell, epi1)
-# SQLP.bind_epigraph!(cell, epi2)
 
 set_optimizer(cell.master, optimizer)
 set_silent(cell.master)
@@ -35,18 +33,16 @@ cell.x_incumbent .= x0
 cell.x_candidate .= x0
 
 # Populate with initial samples
-for i = 1:1000
-    SQLP.add_scenario!(cell.epi[1], rand(sto))
-    # SQLP.add_scenario!(cell.epi[2], rand(sto))
-end
+# for i = 1:1000
+#     SQLP.add_scenario!(cell.epi[1], rand(sto))
+# end
 
 
 hist = Float64[]
-for i = 1:100
-    x, lb = SQLP.sd_iteration!(cell, [rand(sto)]; rho=10.0)
-    ub = SQLP.evaluate(sp1, sp2, sto, cell.x_incumbent)
-    println("Iter $i \t lb=$lb ub=$ub")
-
+for i = 1:1000
+    x, lb, repl = SQLP.sd_iteration!(cell, [rand(sto)]; rho=0.1)
+    # ub = SQLP.evaluate(sp1, sp2, sto, cell.x_incumbent; N=1000)
+    ub = NaN
+    println("Iter $i lb=$lb ub=$ub repl=$repl")
+    push!(hist, ub)
 end
-
-print(hist)

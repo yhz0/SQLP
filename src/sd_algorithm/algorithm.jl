@@ -28,7 +28,7 @@ function incumbent_selection(
     d = evaluate_multi_epigraph(f_last, x_incumbent; sense=sense) + f_inc
     req = b + INCUMBENT_SELECTION_Q * (c - d)
 
-    # @info("Incumbent Selection: cur=$cur req=$req $(cur < req)")
+    # @info("Incumbent Selection: a=$lb_est, b=$b, c=$c, d=$d")
     return lb_est, cur < req
 end
 
@@ -112,5 +112,5 @@ function sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenario}; rho:
         cell.x_incumbent .= cell.x_candidate
     end
 
-    return cell.x_candidate, lb_est
+    return cell.x_candidate, lb_est, replace_incumbent
 end

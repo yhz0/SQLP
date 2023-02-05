@@ -12,11 +12,6 @@ function incumbent_selection(
     sense::MOI.OptimizationSense = MIN_SENSE)::Tuple{Float64, Bool} where
     {T1, T2 <: Union{sdEpigraph, sdEpigraphInfo}}
 
-    #TODO: implement MAX_SENSE
-    if sense == MAX_SENSE
-        error("Unimplemented")
-    end
-
     f_cand = evaluate_expr(common_expr, x_ref, x_candidate)
     f_inc = evaluate_expr(common_expr, x_ref, x_incumbent)
 
@@ -28,8 +23,14 @@ function incumbent_selection(
     d = evaluate_multi_epigraph(f_last, x_incumbent; sense=sense) + f_inc
     req = b + INCUMBENT_SELECTION_Q * (c - d)
 
+    if sense == MIN_SENSE
+        passed = cur < req
+    else
+        passed = cur > req
+    end
+
     # @info("Incumbent Selection: a=$lb_est, b=$b, c=$c, d=$d")
-    return lb_est, cur < req
+    return lb_est, passed
 end
 
 const DUAL_TOLERANCE = 0.001

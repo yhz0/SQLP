@@ -171,8 +171,8 @@ function read_cor(cor_path::String)::spCorType
     lb, ub = _parse_bounds(token["BOUNDS"], col_names)
 
     # Generate mapping from row to indices
-    col_mapping = get_name_mapping(col_names)
-    row_mapping = get_name_mapping(row_names)
+    col_mapping = lookup_table(col_names)
+    row_mapping = lookup_table(row_names)
 
     # Check that the first tow is the objective row
     @assert(directions[1] == 'N',

@@ -21,7 +21,8 @@ function incumbent_selection(
 
     c = evaluate_multi_epigraph(f_last, x_candidate; sense=sense) + f_cand
     d = evaluate_multi_epigraph(f_last, x_incumbent; sense=sense) + f_inc
-    req = b + INCUMBENT_SELECTION_Q * (c - d)
+    req_improvement = INCUMBENT_SELECTION_Q * (c - d)
+    req = b + req_improvement
 
     if sense == MIN_SENSE
         passed = cur < req
@@ -29,7 +30,13 @@ function incumbent_selection(
         passed = cur > req
     end
 
-    # @info("Incumbent Selection: a=$lb_est, b=$b, c=$c, d=$d")
+    if passed
+        print("+")
+    else
+        print("X")
+    end
+
+    # @info("Incumbent Selection: cur=$cur, req=$req, imp=$req_improvement")
     return lb_est, passed
 end
 
@@ -51,9 +58,9 @@ and remove cut that has positive dual multipliers.
 5. Generate new candidate cuts from each epigraph variable
 by argmax procedure, at the candidate solution. Store it in the epigraph.
 6. Do 5, update incumbent cut with incumbent solution.
-7. Sync the cuts to the cell's master.
+7. Do incumbent selection. Replace incumbent if needed.
+8. Sync the cuts to the cell's master.
 Solve master to get new candidate solution.
-8. Do incumbent selection. Replace incumbent if needed.
 """
 function sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenario}; rho::Float64 = 0.01)
     # Make sure the length of the epigraph variable is the same.
@@ -99,6 +106,14 @@ function sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenario}; rho:
         epi.incumbent_cut = build_sasa_cut(epi, cell.x_incumbent, cell.dual_vertices)
     end
 
+    # After the cuts are generated, do we see improvement?
+    # If yes, replace incumbent.
+    lb_est, replace_incumbent = incumbent_selection(epi_info_last, cell.epi,
+        cell.x_candidate, cell.x_incumbent, cell.x_ref, cell.objf_original)
+    if replace_incumbent
+        cell.x_incumbent .= cell.x_candidate
+    end
+
     # Solve master
     add_regularization!(cell, cell.x_incumbent, rho)
     sync_cuts!(cell)
@@ -106,12 +121,6 @@ function sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenario}; rho:
     
     cell.x_candidate .= value.(cell.x_ref)
 
-    # Incumbent selection
-    lb_est, replace_incumbent = incumbent_selection(epi_info_last, cell.epi,
-        cell.x_candidate, cell.x_incumbent, cell.x_ref, cell.objf_original)
-    if replace_incumbent
-        cell.x_incumbent .= cell.x_candidate
-    end
 
     return cell.x_candidate, lb_est, replace_incumbent
 end

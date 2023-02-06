@@ -14,3 +14,7 @@ the problem is passed to the solver again and again. Should reuse instance.
 
 5. Validation phase should use number of samples to target a specified level of accuracy
 in the estimates.
+
+6. Implement override scenario weight in add_scenario! to support importance sampling. (easy to do)
+
+7. Implement Harsha's [random cost coefficients](https://doi.org/10.1287/ijoc.2019.0929). This may need data structure changes, and redesign tests.

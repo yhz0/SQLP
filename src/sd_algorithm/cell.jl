@@ -22,15 +22,20 @@ mutable struct sdCell
     epicon_ref::Vector{Vector{ConstraintRef}}
     epicon_incumbent_ref::Vector{Union{ConstraintRef, Nothing}}
 
-    # Regularization strength; might not be used
-    reg::Float64
-
     # Dual vertices found so far (Warning: concurrent issues)
     dual_vertices::Set{Vector{Float64}}
 
     # Candidate and incumbent solutions found so far
     x_candidate::Vector{Float64}
     x_incumbent::Vector{Float64}
+
+    # Stores incumbent selection info from last iteration
+    # If incumbent selection is not performed, set this to nothing.
+    improvement_info::Union{sdImprovementInfo, Nothing}
+
+    # Stores auxillary user-defined information
+    ext::Dict{Symbol, Any}
+
 end
 
 """
@@ -54,12 +59,15 @@ function sdCell(root_prob::spStageProblem)
     epicon_ref = []
     epicon_incumbent_ref = []
     epi = []
-    reg = 0.0
+
+    improvement_info = nothing
+    ext = Dict{Symbol, Any}()
 
     xlen = length(x_ref)
     return sdCell(master, x_ref, root_stage_con, objf, copy(objf),
         epi, epivar_ref, epicon_ref, epicon_incumbent_ref,
-        reg, Set{Vector{Float64}}(), zeros(xlen), zeros(xlen))
+        Set{Vector{Float64}}(), zeros(xlen), zeros(xlen),
+        improvement_info, ext)
 end
 
 """

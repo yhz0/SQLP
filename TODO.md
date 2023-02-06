@@ -1,3 +1,11 @@
+## Bug/Incomplete Code
+
+1. Rewrite instance_test because of change in data structure.
+2. Test code for improvement.jl
+3. Test code for quad_scalar.jl
+
+## Enhancement
+
 1. (Performance issue) Improve data structure for dual vertices. 
 Currently the dual vertices are stored with Set{Vector{Float64}}. This
 compares two vectors exactly and creates unnecessary copies.
@@ -17,4 +25,5 @@ in the estimates.
 
 6. Implement override scenario weight in add_scenario! to support importance sampling. (easy to do)
 
-7. Implement Harsha's [random cost coefficients](https://doi.org/10.1287/ijoc.2019.0929). This may need data structure changes, and redesign tests.
+7. Implement Harsha's [random cost coefficients](https://doi.org/10.1287/ijoc.2019.0929).
+This may need data structure changes, and redesign tests.

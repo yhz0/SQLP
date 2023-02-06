@@ -27,3 +27,7 @@ in the estimates.
 
 7. Implement Harsha's [random cost coefficients](https://doi.org/10.1287/ijoc.2019.0929).
 This may need data structure changes, and redesign tests.
+
+8. Implement SMPS sampling methods (antithetic, stratified).
+
+9. For importance sampling, need to override the epigraph's total_weight when adding new samples.

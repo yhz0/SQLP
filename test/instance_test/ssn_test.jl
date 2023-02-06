@@ -33,16 +33,16 @@ x0 = zeros(89)
 cell.x_incumbent .= x0
 cell.x_candidate .= x0
 
-# Populate with initial samples
-for i = 1:1000
-    SQLP.add_scenario!(cell.epi[1], rand(sto))
-end
+# # Populate with initial samples
+# for i = 1:1000
+#     SQLP.add_scenario!(cell.epi[1], rand(sto))
+# end
 
 
 using Random
 Random.seed!(42)
 
-for i = 1:1000
+for i = 1:3000
     x, lb, repl = SQLP.sd_iteration!(cell, [rand(sto)]; rho=0.1)
     # ub = NaN
     if i % 100 == 0
@@ -50,7 +50,7 @@ for i = 1:1000
     else
         ub = NaN
     end
-    if i % 10 == 0
+    if i % 100 == 0
         println("Iter $i lb=$lb ub=$ub repl=$repl dual=$(length(cell.dual_vertices))")
     end
 end

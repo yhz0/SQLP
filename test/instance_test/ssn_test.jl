@@ -43,14 +43,17 @@ using Random
 Random.seed!(42)
 
 for i = 1:3000
-    x, lb, repl = SQLP.sd_iteration!(cell, [rand(sto)]; rho=0.1)
+    SQLP.sd_iteration!(cell, [rand(sto)])
+
+    lb = cell.improvement_info.candidate_estimation
+    repl = cell.improvement_info.is_improved
     # ub = NaN
     if i % 100 == 0
         ub = SQLP.evaluate(sp1, sp2, sto, cell.x_incumbent; N=10000)
     else
         ub = NaN
     end
-    if i % 100 == 0
-        println("Iter $i lb=$lb ub=$ub repl=$repl dual=$(length(cell.dual_vertices))")
+    if i % 10 == 0
+        println("Iter $i lb=$lb ub=$ub dual=$(length(cell.dual_vertices))")
     end
 end

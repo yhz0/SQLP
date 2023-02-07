@@ -34,7 +34,7 @@ strength in master.
 - `update_incumbent_cut::Bool=true`: if true, update the incumbent cut using argmax.
 """
 function sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenario},
-     update_incumbent_cut::Bool=true, quad_scalar_schedule::Function=ConstantQuadScalarSchedule(0.001))
+     update_incumbent_cut::Bool=true, quad_scalar_schedule::Function=ConstantQuadScalarSchedule(0.1))
     # Make sure the length of the epigraph variable is the same.
     @assert(length(scenario_list) == length(cell.epivar_ref))
 
@@ -90,6 +90,7 @@ function sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenario},
     end
     
     # Solve master and store candidate solution
+    rho = quad_scalar_schedule(cell)
     add_regularization!(cell, cell.x_incumbent, rho)
     sync_cuts!(cell)
     optimize!(cell.master)

@@ -41,7 +41,7 @@ function check_improvement(
         is_improved = candidate_estimation > req
     end
 
-    info = sdIncumbentSelectionInfo(
+    info = sdImprovementInfo(
         candidate_estimation, incumbent_estimation,
         required_improvement, is_improved
     )

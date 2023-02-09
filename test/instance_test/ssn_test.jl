@@ -33,27 +33,31 @@ x0 = zeros(89)
 cell.x_incumbent .= x0
 cell.x_candidate .= x0
 
-# # Populate with initial samples
+# Populate with initial samples
 # for i = 1:1000
 #     SQLP.add_scenario!(cell.epi[1], rand(sto))
 # end
 
-
 using Random
-Random.seed!(42)
 
-for i = 1:3000
-    SQLP.sd_iteration!(cell, [rand(sto)])
+function test()
+    Random.seed!(42)
+    qss = SQLP.AdaptiveQuadScalarSchedule()
+    cell.ext[:quad_scalar]=0.001
+    for i = 1:3000
+        SQLP.sd_iteration!(cell, [rand(sto)]; quad_scalar_schedule=qss)
 
-    lb = cell.improvement_info.candidate_estimation
-    repl = cell.improvement_info.is_improved
-    # ub = NaN
-    if i % 100 == 0
-        ub = SQLP.evaluate(sp1, sp2, sto, cell.x_incumbent; N=10000)
-    else
-        ub = NaN
-    end
-    if i % 10 == 0
-        println("Iter $i lb=$lb ub=$ub dual=$(length(cell.dual_vertices))")
+        lb = cell.improvement_info.candidate_estimation
+        repl = cell.improvement_info.is_improved
+        # ub = NaN
+        # if i % 100 == 0
+        #     ub = SQLP.evaluate(sp1, sp2, sto, cell.x_incumbent; N=10000)
+        # else
+        #     ub = NaN
+        # end
+        
+        println("it $i quad $(cell.ext[:quad_scalar])")
     end
 end
+test()
+# @enter test()

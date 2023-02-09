@@ -30,10 +30,13 @@ Do an iteration of SD given the scenario list.
 - `scenario_list::Vector{spSmpsScenario}`: a vector of new scenarios to insert to each epigraph.
 Should have the same length as the number of epigraph variables in the cell.
 - `quad_scalar_schedule::Function=ConstantQuadScalarSchedule(0.001)`: schedule used to control
-strength in master. 
+strength in master. The provided function is called AFTER the incumbent
+selection, but BEFORE the incumbent is replaced with candidate. The cell 
+contains the candidate solution and incumbent solution from the last iteration.
+See quad_scalar.jl.
 - `update_incumbent_cut::Bool=true`: if true, update the incumbent cut using argmax.
 """
-function sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenario},
+function sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenario};
      update_incumbent_cut::Bool=true, quad_scalar_schedule::Function=ConstantQuadScalarSchedule(0.1))
     # Make sure the length of the epigraph variable is the same.
     @assert(length(scenario_list) == length(cell.epivar_ref))
@@ -85,12 +88,16 @@ function sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenario},
     # If yes, replace incumbent.
     cell.improvement_info = check_improvement(epi_info_last, cell.epi,
         cell.x_candidate, cell.x_incumbent, cell.x_ref, cell.objf_original)
+    
+    # Call quad_scalar_schedule to determine the next step set_optimizer
+    # BEFORE the incumbent is overwritten.
+    rho = quad_scalar_schedule(cell)
+
     if cell.improvement_info.is_improved
         cell.x_incumbent .= cell.x_candidate
     end
     
     # Solve master and store candidate solution
-    rho = quad_scalar_schedule(cell)
     add_regularization!(cell, cell.x_incumbent, rho)
     sync_cuts!(cell)
     optimize!(cell.master)

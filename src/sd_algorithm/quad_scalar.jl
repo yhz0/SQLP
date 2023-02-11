@@ -14,7 +14,7 @@ from the last iteration.
 """
 function AdaptiveQuadScalarSchedule(;
     min_quad_scalar::Float64=1e-3, max_quad_scalar::Float64=1e4,
-    R2::Float64=0.95, R3::Float64=2.0, tolerance=1e-3
+    R2::Float64=0.95, R3::Float64=2.0, tolerance=1e-3, debug=false
     )
 
     function g(cell::sdCell)::Float64
@@ -47,10 +47,20 @@ function AdaptiveQuadScalarSchedule(;
             # Incumbent was replaced and the step is significantly larger
             if normDk > tolerance && normDk >= R3 * normDk_1
                 cell.ext[:quad_scalar] *= (R2 * R3 * normDk_1 / normDk)
+                if debug
+                    print("+")
+                end
+            else
+                if debug
+                    print("O")
+                end
             end
         else
             # Incumbent was not replaced
             cell.ext[:quad_scalar] /= R2
+            if debug
+                print("X")
+            end
         end
 
         # In any case, clamp quad scalar to interval

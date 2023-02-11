@@ -1,9 +1,5 @@
 ## Bug/Incomplete Code
 
-1. Rewrite instance_test because of change in data structure.
-2. Test code for improvement.jl
-3. Test code for quad_scalar.jl
-
 ## Enhancement
 
 1. (Performance issue) Improve data structure for dual vertices. 
@@ -12,8 +8,6 @@ compares two vectors exactly and creates unnecessary copies.
     - One way is to use norm and cosine similarity to define is_equal(), then
     hash them with the norm.
     - Alternative is to use local sensitive hashing.
-
-2. Implement crash methods to initialize an appropriate starting solution.
 
 3. (Performance Issue) Profiling needed. Probably the subproblem solving is slow because
 the problem is passed to the solver again and again. Should reuse instance.

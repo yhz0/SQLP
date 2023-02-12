@@ -33,14 +33,16 @@ end
 # x0 = [100.0, 200.0, 150.0, 170.0, 180.0, 170.0, 170.0]
 x0 = [10.0, 20.0, 15.0, 17.0, 18.0, 17.0, 17.0]
 @test SQLP.check_first_stage_feasible(sp1, x0; optimizer)
+
+# Choose a starting solution with 100 scenario problem
+scenario_set = [rand(sto) for i = 1:100]
+all_in_one_model, annotation = SQLP.all_in_one(sp1, sp2,scenario_set)
+set_optimizer(all_in_one_model, CPLEX.Optimizer)
+optimize!(all_in_one_model)
+x0 = value.(annotation[0])
+
 cell.x_incumbent .= x0
 cell.x_candidate .= x0
-
-# Populate with initial samples
-# for i = 1:1000
-#     SQLP.add_scenario!(cell.epi[1], rand(sto))
-# end
-
 
 using Random
 

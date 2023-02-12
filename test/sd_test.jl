@@ -77,7 +77,7 @@ scenario_set = SQLP.spSmpsScenario[my_scenario, my_scenario, my_scenario_2, my_s
 delta_set = SQLP.delta_coefficients.(Ref(coef), scenario_set)
 
 # Generate some dual points with x1
-dual_points = Set{Vector{Float64}}()
+dual_points = SQLP.sdDualVertexSet()
 for scenario in scenario_set
     local v, y, p = SQLP.solve_problem!(sp2, x1, scenario)
     push!(dual_points, p)
@@ -207,27 +207,27 @@ empty!(epi3.cuts)
 # Test for build_sasa_cut
 
 x = [2., 3., 4., 5.]
-dv = [my_dual, my_dual_2]
+dv = SQLP.sdDualVertexSet([my_dual, my_dual_2])
 # Change some weight to see if it works correctly
 epi2 = SQLP.sdEpigraph(sp2, 0.5, 100.0)
 SQLP.add_scenario!(epi2, my_scenario_2, 1.5) # RHS = 3.0
 SQLP.add_scenario!(epi2, my_scenario_3, 0.5) # RHS = 7.0
 
 # Manual calculation:
-# Epi2 scenario #1 (3.0): dv1=168 dv2=169 choose dv[2]
-# SQLP.eval_dual(epi[2].subproblem_coef, epi[2].scenario_delta[1], x, dv[1])
-# SQLP.eval_dual(epi[2].subproblem_coef, epi[2].scenario_delta[1], x, dv[2])
-# Epi2 scenario #2 (7.0): dv1=344 dv2=331 choose dv[1]
-# SQLP.eval_dual(epi[2].subproblem_coef, epi[2].scenario_delta[2], x, dv[1])
-# SQLP.eval_dual(epi[2].subproblem_coef, epi[2].scenario_delta[2], x, dv[2])
+# Epi2 scenario #1 (3.0): dv1=168 dv2=169 choose my_dual_2
+# SQLP.eval_dual(epi[2].subproblem_coef, epi[2].scenario_delta[1], x, my_dual)
+# SQLP.eval_dual(epi[2].subproblem_coef, epi[2].scenario_delta[1], x, my_dual_2)
+# Epi2 scenario #2 (7.0): dv1=344 dv2=331 choose my_dual
+# SQLP.eval_dual(epi[2].subproblem_coef, epi[2].scenario_delta[2], x, my_dual)
+# SQLP.eval_dual(epi[2].subproblem_coef, epi[2].scenario_delta[2], x, my_dual_2)
 
 r1 = epi2.subproblem_coef.rhs + epi2.scenario_delta[1].delta_rhs
 T1 = epi2.subproblem_coef.transfer + epi2.scenario_delta[1].delta_transfer
 r2 = epi2.subproblem_coef.rhs + epi2.scenario_delta[2].delta_rhs
 T2 = epi2.subproblem_coef.transfer + epi2.scenario_delta[2].delta_transfer
 
-expected_alpha = 1.5/2.0 * dv[2]' * r1 + 0.5/2.0 * dv[1]' * r2
-expected_beta = 1.5/2.0 * -T1' * dv[2] + 0.5/2.0 * -T2' * dv[1]
+expected_alpha = 1.5/2.0 * my_dual_2' * r1 + 0.5/2.0 * my_dual' * r2
+expected_beta = 1.5/2.0 * -T1' * my_dual_2 + 0.5/2.0 * -T2' * my_dual
 
 cut = SQLP.build_sasa_cut(epi2, x, dv)
 @test cut.alpha == expected_alpha

@@ -1,4 +1,4 @@
-using SparseArrays
+using LinearAlgebra, SparseArrays
 
 # Matrix coefficients in the second stage problem
 mutable struct sdSubprobCoefficients
@@ -125,15 +125,10 @@ end
 Evaluate the dual solution dual at x, with the scenario set to omega.
 This assumes that all bounds-related dual variables are trivial.
 """
-function eval_dual(coef::sdSubprobCoefficients, delta::sdDeltaCoefficients,x::Vector{Float64}, dual::Vector{Float64})::Float64
+function eval_dual(coef::sdSubprobCoefficients, delta::sdDeltaCoefficients,
+    x::Vector{Float64}, dual::Vector{Float64})::Float64
     return dot(dual, (coef.rhs + delta.delta_rhs) - (coef.transfer + delta.delta_transfer) * x)
 end
-
-"""
-Structure used to store dual vertices.
-Either a set of vectors or non-unique vector of vectors.
-"""
-sdDualSet = Union{Set{Vector{Float64}}, Vector{Vector{Float64}}}
 
 """
 Find the dual extreme point in the dual_set that yields the highest cut at given x.
@@ -144,7 +139,7 @@ Sense is set as the same as subproblem. It should either be MIN_SENSE or MAX_SEN
 If MIN_SENSE(default), we do epigraph, so taking argmax. If it is MAX_SENSE, we do the other way.
 """
 function argmax_procedure(coef::sdSubprobCoefficients, delta_set::Vector{sdDeltaCoefficients},
-    x::Vector{Float64}, dual_vertices::sdDualSet;
+    x::Vector{Float64}, dual_vertices::sdDualVertexSet;
     sense::MOI.OptimizationSense=MIN_SENSE)::Tuple{Vector{Float64}, Vector{Ref{Vector{Float64}}}}
     max_arg = Ref{Vector{Float64}}[]
     max_val = Float64[]

@@ -1,6 +1,6 @@
 # Implementation of Two-stage Stochastic Decomposition algorithm
-using LinearAlgebra
 
+include("dual_set.jl")
 include("subprob.jl")
 include("epigraph.jl")
 include("improvement.jl")

@@ -123,7 +123,7 @@ pi is the relatative weight of a sample in this epigraph, proportional
 to weight_i and sums to 1.
 """
 function build_sasa_cut(epi::sdEpigraph, x::Vector{Float64},
-    dual_vertices::sdDualSet)::sdCut
+    dual_vertices::sdDualVertexSet)::sdCut
     max_val, max_arg = argmax_procedure(epi.subproblem_coef, epi.scenario_delta,
         x, dual_vertices; sense=objective_sense(epi.prob.model))
 

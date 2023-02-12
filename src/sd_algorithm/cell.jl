@@ -23,7 +23,7 @@ mutable struct sdCell
     epicon_incumbent_ref::Vector{Union{ConstraintRef, Nothing}}
 
     # Dual vertices found so far (Warning: concurrent issues)
-    dual_vertices::Set{Vector{Float64}}
+    dual_vertices::sdDualVertexSet
 
     # Candidate and incumbent solutions found so far
     x_candidate::Vector{Float64}
@@ -66,7 +66,7 @@ function sdCell(root_prob::spStageProblem)
     xlen = length(x_ref)
     return sdCell(master, x_ref, root_stage_con, objf, copy(objf),
         epi, epivar_ref, epicon_ref, epicon_incumbent_ref,
-        Set{Vector{Float64}}(), zeros(xlen), zeros(xlen),
+        sdDualVertexSet(), zeros(xlen), zeros(xlen),
         improvement_info, ext)
 end
 

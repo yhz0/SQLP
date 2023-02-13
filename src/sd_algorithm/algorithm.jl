@@ -60,7 +60,7 @@ function sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenario};
             delete_index = Int[]
             for j in eachindex(cell.epicon_ref[i])
                 con = cell.epicon_ref[i][j]
-                if abs(dual(con)) >= CUT_REMOVE_TOLERANCE
+                if abs(dual(con)) < CUT_REMOVE_TOLERANCE
                     # Mark j for deletion
                     push!(delete_index, j)
                 end
@@ -101,6 +101,7 @@ function sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenario};
     add_regularization!(cell, cell.x_incumbent, rho)
     sync_cuts!(cell)
     optimize!(cell.master)
+    @assert(termination_status(cell.master) == OPTIMAL)
     cell.x_candidate .= value.(cell.x_ref)
 
     return

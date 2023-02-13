@@ -1,7 +1,7 @@
 """
 Number of significant digits to compare for a dual vertex.
 """
-const SIGNIFICANT_DIGITS::Int = 16
+const SIGNIFICANT_DIGITS = 16
 
 """
 Representation of a dual vertex in D dimension.

@@ -101,7 +101,7 @@ function sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenario};
     add_regularization!(cell, cell.x_incumbent, rho)
     sync_cuts!(cell)
     optimize!(cell.master)
-    @assert(termination_status(cell.master) == OPTIMAL)
+    @assert(termination_status(cell.master) in [OPTIMAL, LOCALLY_SOLVED])
     cell.x_candidate .= value.(cell.x_ref)
 
     return

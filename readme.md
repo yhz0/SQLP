@@ -10,6 +10,8 @@ A multi-epigraph version of two-stage regularized SD algorithm.
 
 ## Current Issues (TODO List)
 
+1. Rewrite twosd master to use direction finding, to avoid numerical issues.
+
 2. (Performance Issue) Profiling needed. Probably the subproblem solving is slow because
 the problem is passed to the solver again and again. Should reuse instance.
 

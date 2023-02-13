@@ -55,7 +55,7 @@ function sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenario};
     end
 
     # Remove cuts with non-zero multiplier
-    if termination_status(cell.master) == OPTIMAL
+    if termination_status(cell.master) in [OPTIMAL, LOCALLY_SOLVED]
         for i in eachindex(cell.epicon_ref)
             delete_index = Int[]
             for j in eachindex(cell.epicon_ref[i])
@@ -100,8 +100,15 @@ function sd_iteration!(cell::sdCell, scenario_list::Vector{spSmpsScenario};
     # Solve master and store candidate solution
     add_regularization!(cell, cell.x_incumbent, rho)
     sync_cuts!(cell)
-    optimize!(cell.master)
-    @assert(termination_status(cell.master) in [OPTIMAL, LOCALLY_SOLVED])
+
+    try
+        optimize!(cell.master)
+        @assert(termination_status(cell.master) in [OPTIMAL, LOCALLY_SOLVED])
+    catch
+        write_to_file(cell.master, "error_model.mof.json")
+        rethrow()
+    end
+    
     cell.x_candidate .= value.(cell.x_ref)
 
     return

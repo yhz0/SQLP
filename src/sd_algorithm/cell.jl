@@ -104,7 +104,7 @@ function bind_epigraph!(cell::sdCell, epi::sdEpigraph)
     push!(cell.epi, epi)
 
     epiv = @variable(cell.master)
-    set_lower_bound(epiv, epi.lower_bound)
+    # set_lower_bound(epiv, epi.lower_bound)
 
     push!(cell.epivar_ref, epiv)
     push!(cell.epicon_ref, [])

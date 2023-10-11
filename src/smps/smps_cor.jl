@@ -163,7 +163,7 @@ function read_cor(cor_path::String)::spCorType
         token = _tokenize_cor(io)
     end
     problem_name::String = token["NAME"][1]
-    directions, row_names = SQLP._parse_row_tokens(token["ROWS"])
+    directions, row_names = TwoSD._parse_row_tokens(token["ROWS"])
     col_names = _parse_unique_columns(token["COLUMNS"])
     template_matrix = _parse_column_to_matrix(token["COLUMNS"],
         row_names, col_names)

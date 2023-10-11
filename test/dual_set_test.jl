@@ -1,4 +1,4 @@
-using Test, SQLP
+using Test, .TwoSD
 v1 = [1., 2, 3]
 v2 = [1.0000000001, 2, 3]
 v3 = [4., 5, 6]
@@ -6,14 +6,14 @@ v4 = [4., 5, 6, 7]
 v5 = [3., 2, 1]
 
 # Equality test
-@test isequal(SQLP.sdDualVertex(v1), SQLP.sdDualVertex(v2))
-@test isequal(SQLP.sdDualVertex(v3), SQLP.sdDualVertex(v3))
-@test !isequal(SQLP.sdDualVertex(v1), SQLP.sdDualVertex(v3))
-@test !isequal(SQLP.sdDualVertex(v3), SQLP.sdDualVertex(v4))
-@test !isequal(SQLP.sdDualVertex(v5), SQLP.sdDualVertex(v1))
+@test isequal(TwoSD.sdDualVertex(v1), TwoSD.sdDualVertex(v2))
+@test isequal(TwoSD.sdDualVertex(v3), TwoSD.sdDualVertex(v3))
+@test !isequal(TwoSD.sdDualVertex(v1), TwoSD.sdDualVertex(v3))
+@test !isequal(TwoSD.sdDualVertex(v3), TwoSD.sdDualVertex(v4))
+@test !isequal(TwoSD.sdDualVertex(v5), TwoSD.sdDualVertex(v1))
 
 # Remove duplication
-dvs = SQLP.sdDualVertexSet()
+dvs = TwoSD.sdDualVertexSet()
 push!(dvs, v1)
 @test length(dvs) == 1
 push!(dvs, v2)
@@ -26,7 +26,7 @@ push!(dvs, v5)
 @test length(dvs) == 4
 
 # Initialize with De-duplication
-dvs = SQLP.sdDualVertexSet([v1,v2,v3,v4,v5])
+dvs = TwoSD.sdDualVertexSet([v1,v2,v3,v4,v5])
 @test length(dvs) == 4
 
 # Iterate

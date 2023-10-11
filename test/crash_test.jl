@@ -1,21 +1,21 @@
-using JuMP, SQLP, GLPK, Test
+using JuMP, .TwoSD, GLPK, Test
 
-cor = SQLP.read_cor(joinpath("spInput", "lands", "lands.cor"))
-tim = SQLP.read_tim(joinpath("spInput", "lands", "lands.tim"))
-sto = SQLP.read_sto(joinpath("spInput", "lands", "lands.sto"))
+cor = TwoSD.read_cor(joinpath("spInput", "lands", "lands.cor"))
+tim = TwoSD.read_tim(joinpath("spInput", "lands", "lands.tim"))
+sto = TwoSD.read_sto(joinpath("spInput", "lands", "lands.sto"))
 
 # Inputs
-sp1 = SQLP.get_smps_stage_template(cor, tim, 1)
-sp2 = SQLP.get_smps_stage_template(cor, tim, 2)
+sp1 = TwoSD.get_smps_stage_template(cor, tim, 1)
+sp2 = TwoSD.get_smps_stage_template(cor, tim, 2)
 
-scenarios = SQLP.spSmpsScenario[
-    [SQLP.spSmpsPosition("RHS", "S2C5") => 3.0],
-    [SQLP.spSmpsPosition("RHS", "S2C5") => 5.0],
-    [SQLP.spSmpsPosition("RHS", "S2C5") => 7.0]
+scenarios = TwoSD.spSmpsScenario[
+    [TwoSD.spSmpsPosition("RHS", "S2C5") => 3.0],
+    [TwoSD.spSmpsPosition("RHS", "S2C5") => 5.0],
+    [TwoSD.spSmpsPosition("RHS", "S2C5") => 7.0]
 ]
 probs = [0.3, 0.4, 0.3]
 
-model, annotation = SQLP.all_in_one(sp1, sp2, scenarios, probs)
+model, annotation = TwoSD.all_in_one(sp1, sp2, scenarios, probs)
 
 # Root stage
 @test length(annotation[0]) == length(sp1.current_stage_vars)
@@ -80,7 +80,7 @@ optimize!(model)
 #     return
 # end
 
-# model, annotation = SQLP.all_in_one(sp1, sp2, [rand(sto) for i in 1:10000])
+# model, annotation = TwoSD.all_in_one(sp1, sp2, [rand(sto) for i in 1:10000])
 # set_optimizer(model, CPLEX.Optimizer)
 # MOIU.attach_optimizer(model)
 # add_annotation(model, annotation)

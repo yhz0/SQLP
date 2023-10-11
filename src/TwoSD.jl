@@ -1,4 +1,4 @@
-module SQLP
+module TwoSD
     include("utils.jl")
     include("prob.jl")
     include("smps/smps.jl")

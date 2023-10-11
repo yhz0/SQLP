@@ -39,7 +39,7 @@ function all_in_one(sp1::spStageProblem, sp2::spStageProblem,
         end
         scenario = scenarios[s]
 
-        SQLP.instantiate!(sp2, scenario)
+        TwoSD.instantiate!(sp2, scenario)
 
         # Create variables for second stage; copy bounds
         second_stage_vars = copy_variable!.(model, sp2.current_stage_vars; copy_bounds=true)
